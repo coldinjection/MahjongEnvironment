@@ -1,7 +1,8 @@
+import Base.isless
 # bits 5 and 8 represent the type
 # bits 1 to 4 represent the number
 # 0b00000000 is considered empty tile
-@inline getType(code::UInt8)  = code & 0b00110000
+@inline getType(code::UInt8)  = code & 0b11110000
 @inline getNum(code::UInt8) = code & 0b00001111
 const WAN   = 0b00010000 # 0x10
 const TIAO  = 0b00100000 # 0x20
@@ -26,10 +27,12 @@ function Tile(type::UInt8, num::Int)
 end
 @inline getType(tile::Tile)  = getType(tile.code)
 @inline getNum(tile::Tile) = getNum(tile.code)
-@inline getSerial(tile::Tile) = getSerial(tile.code)
 
+# extend `isless` so that tiles can be sorted
+isless(t1::Tile, t2::Tile) = isless(t1.code, t2.code)
+# alias for vector of tiles
 TileList = Vector{Tile}
-
+# empty tiles, mainly used for initialization
 const EMPTY_TILE = Tile(0b00000000)
 
 function createTiles(suit::String = "basic")
