@@ -12,8 +12,10 @@ end
 
 function dealTiles(tilesPerPlayer = 13)
     playerTiles = fill(EMPTY_TILE, (tilesPerPlayer, 4))
+    global stackTop
     for i = 1:(tilesPerPlayer*4)
-        playerTiles[i] = pop!(tileStack)
+        playerTiles[i] = tileStack[stackTop]
+        stackTop -= 1
     end
     return playerTiles
 end
@@ -47,27 +49,22 @@ function initGame()
             # 清幺九
             "pureonenine" => 16,
         )
-        global till_the_end = "till_the_end" in gameMode
-        global exchange3 = "exchange3" in gameMode
+        global bloodRiver = "bloodRiver" in gameMode # true by default
+        global exchange3 = "exchange3" in gameMode # false by default
     end
 
-    # default set of tiles a player can hu (empty)
-    global emptyTingpai = Dict{String, TileList}()
-    for rule in keys(hupaiRules)
-        push!(emptyTingpai, rule => TileList([]))
-    end
     # stack of tiles from which players take tiles
     global tileStack = shuffle(createTiles(suit))
+    # index of the tile to be taken by player
+    # initially equals number of tiles
+    # decreases by 1 after a player takes a tile
+    global stackTop = length(tileStack)
     # pool of tiles to which players give tiles
     global tilePool = fill(EMPTY_TILE, (nTiles - tilesPerPlayer*4,))
-    # number of the current hand
-    global handCount = 1
-    # the tile that has just been given out in the current hand
-    global bufferedTile = EMPTY_TILE
     # tiles for each player, array size = (NUM_PER_PLAYER+1, 4)
     # the extra tile at the end serves as buffer for the tile taken by the player
-    playerTiles = vcat(dealTiles(tilesPerPlayer),
-        [EMPTY_TILE EMPTY_TILE EMPTY_TILE EMPTY_TILE])
+    playerTiles = vcat([EMPTY_TILE EMPTY_TILE EMPTY_TILE EMPTY_TILE],
+                    dealTiles(tilesPerPlayer))
     # the 4 players
     global players = [Player(playerTiles[:,i]) for i in 1:4]
 

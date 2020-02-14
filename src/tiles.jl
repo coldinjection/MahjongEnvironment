@@ -1,39 +1,54 @@
 import Base.isless
+import Base.+
+import Base.-
+
 # bits 5 and 8 represent the type
 # bits 1 to 4 represent the number
 # 0b00000000 is considered empty tile
 @inline getType(code::UInt8)  = code & 0b11110000
 @inline getNum(code::UInt8) = code & 0b00001111
-const WAN   = 0b00010000 # 0x10
-const TIAO  = 0b00100000 # 0x20
-const TONG  = 0b01000000 # 0x40
-const EXTRA = 0b10000000 # 0x80
+const WAN   = 0b00000001 # 0x01
+const TIAO  = 0b00000010 # 0x02
+const TONG  = 0b00000100 # 0x04
+const EXTRA = 0b00001000 # 0x08
 
 struct Tile
-    code::UInt8
-    Tile(c::UInt8) = new(c)
+    type::UInt8
+    num::UInt8
+    Tile(t::UInt8, n::UInt8) = new(t, n)
 end
-function Tile(type::UInt8, num::Int)
-    # this constructor may be unnecessary, it may be deleted
-    if type != EXTRA && num > 9
+function Tile(type::UInt8, num::Integer)
+    if t in (WAN, TIAO, TONG) && n > 9
         error("num is too large")
     end
     try
-        num::UInt8 = getNum(UInt8(num))
+        num = UInt8(num)
     catch InexactError
         error("it is required that 0 <= num <= 15")
     end
-    return Tile(type | num)
+    return Tile(type, num)
 end
-@inline getType(tile::Tile)  = getType(tile.code)
-@inline getNum(tile::Tile) = getNum(tile.code)
+Tile(code::UInt8) = Tile(>>(code&0xf0, 4), code&0x0f)
 
-# extend `isless` so that tiles can be sorted
-isless(t1::Tile, t2::Tile) = isless(t1.code, t2.code)
 # alias for vector of tiles
 TileList = Vector{Tile}
 # empty tiles, mainly used for initialization
-const EMPTY_TILE = Tile(0b00000000)
+const EMPTY_TILE = Tile(0x00, 0x00)
+
+@inline getType(tile::Tile)  = tile.type
+@inline getNum(tile::Tile) = tile.num
+@inline getTypes(playerTiles::TileList) = Set(map(getType, playerTiles))
+@inline getNums(playerTiles::TileList) = Set(map(getNum, playerTiles))
+
+# extend `isless` so that tiles can be sorted
+isless(t1::Tile, t2::Tile) = isless(t1.type, t2.type) ||
+                                isequal(t1.type, t2.type) &&
+                                isless(t1.num, t2.num)
+# extend `+` and `-` operators
++(t::Tile, i::UInt8) = Tile(t.type, t.num + i)
+-(t::Tile, i::UInt8) = Tile(t.type, t.num - i)
++(t::Tile, i::Int) = +(t, UInt8(i))
+-(t::Tile, i::Int) = -(t, UInt8(i))
 
 function createTiles(suit::String = "basic")
     # no need to create set of tiles for suits other than "basic"
@@ -49,16 +64,14 @@ function createTiles(suit::String = "basic")
     # create WANs, then TIAOs, then TONGs
     type::UInt8 = WAN
     for i = 0:2
-        # generate the first tile of the current type
-        # by setting num to 1
-        code = type | 0b00000001
+        num::UInt8 = 0x01
         for j = 0:8
-            tile = Tile(code)
+            tile = Tile(type, num)
             tileSet[nTiles - i*9 - j] = tile
             tileSet[nTiles - i*9 - j - 27] = tile
             tileSet[nTiles - i*9 - j - 54] = tile
             tileSet[nTiles - i*9 - j - 81] = tile
-            code += UInt8(1)
+            num += UInt8(1)
         end
         # change to the next type
         type = <<(type, 1)
