@@ -53,25 +53,28 @@ function initGame()
         global exchange3 = "exchange3" in gameMode # false by default
     end
 
-    # stack of tiles from which players take tiles
     global tileStack = shuffle(createTiles(suit))
-    # index of the tile to be taken by player
-    # initially equals number of tiles
-    # decreases by 1 after a player takes a tile
     global stackTop = length(tileStack)
-    # pool of tiles to which players give tiles
-    global tilePool = fill(EMPTY_TILE, (nTiles - tilesPerPlayer*4,))
-    nhand = 1
     # tiles for each player, array size = (NUM_PER_PLAYER+1, 4)
-    # the extra tile at the end serves as buffer for the tile taken by the player
+    # the extra tile at the front serves as buffer for the tile taken by the player
     playerTiles = vcat([EMPTY_TILE EMPTY_TILE EMPTY_TILE EMPTY_TILE],
                     dealTiles(tilesPerPlayer))
-    # the 4 players
-    global players = [Player(playerTiles[:,i]) for i in 1:4]
-    global refp = [refPlayer(p) for p in players]
-    for p in refp
-        findTing(p)
+    # assign tiles to players and find tingpai for the first time
+    for i = 1:4
+        players[i].playerTiles = playerTiles[:,i]
+        players[i].playableNum = tilesPerPlayer + 1
+        findTing(refp[i])
     end
 
     return
+end
+
+function playGame()
+
+end
+
+function test()
+    println(EMPTY_TILE)
+    println(stackTop)
+
 end

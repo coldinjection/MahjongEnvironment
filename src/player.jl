@@ -18,14 +18,19 @@ mutable struct Player
     # because the last tile is a buffer
     # the buffer tile is always at playerTiles[1]
     # tiles become unplayable when they are peng(ed) or gang(ed)
-    Player(playerTiles::TileList) =
-        new(playerTiles, emptyTingpai,
+    Player() =
+        new(TileList([]), EMPTY_TINGPAI,
             TileList([]),TileList([]),TileList([]),
             TileList([]),TileList([]),TileList([]),
-            length(playerTiles), 0x00, 0, false)
+            0, 0x00, 0, false)
 end
 
 @inline refPlayer(pIndex::Int) = Ref{Player}(players[pIndex])
+# default set of tiles a player can hu (empty)
+const EMPTY_TINGPAI = Dict{Tile, String}()
+# the 4 players
+players = [Player() for i = 1:4]
+refp = [refPlayer(i) for i = 1:4]
 
 function sortTiles(p::Ref{Player})
     # sort the playable tiles
@@ -199,7 +204,7 @@ end
 
 # find tiles the player can hu
 function findTing(p::Ref{Player})
-    p[].tingPai = emptyTingpai
+    p[].tingPai = EMPTY_TINGPAI
     sortTiles(p)
     original::TileList = copy(p[].playerTiles)
     checked::TileList = []
@@ -222,6 +227,7 @@ end
 
 # take a tile from tileStack
 function takeTile(p::Ref{Player})
+    global stackTop
     p[].playerTiles[1] = tileStack[stackTop]
     stackTop -= 1
     return
@@ -232,8 +238,10 @@ function giveTile(p::Ref{Player}, ti::Int)
     if ti > p[].playableNum
         error("unplayable tile")
     end
-    bufferedTile = p[].playerTiles[ti]
+    global bufferedTile = p[].playerTiles[ti]
     p[].playerTiles[ti] = EMPTY_TILE
+    # update all player status after the hand is finished
+    findTing(p)
     return
 end
 

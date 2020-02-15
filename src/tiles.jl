@@ -2,11 +2,6 @@ import Base.isless
 import Base.+
 import Base.-
 
-# bits 5 and 8 represent the type
-# bits 1 to 4 represent the number
-# 0b00000000 is considered empty tile
-@inline getType(code::UInt8)  = code & 0b11110000
-@inline getNum(code::UInt8) = code & 0b00001111
 const WAN   = 0b00000001 # 0x01
 const TIAO  = 0b00000010 # 0x02
 const TONG  = 0b00000100 # 0x04
@@ -34,6 +29,16 @@ Tile(code::UInt8) = Tile(>>(code&0xf0, 4), code&0x0f)
 TileList = Vector{Tile}
 # empty tiles, mainly used for initialization
 const EMPTY_TILE = Tile(0x00, 0x00)
+# the tile that has just been given out in the current hand
+bufferedTile = EMPTY_TILE
+# pool of tiles to which players give tiles
+tilePool = TileList([])
+# stack of tiles from which players take tiles
+tileStack = TileList([])
+# index of the tile to be taken from tileStack
+# equals length of tileStack after calling initGame()
+# decrease by 1 after each takeTile()
+stackTop = 0
 
 @inline getType(tile::Tile)  = tile.type
 @inline getNum(tile::Tile) = tile.num
