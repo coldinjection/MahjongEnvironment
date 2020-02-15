@@ -11,6 +11,8 @@ defaultMode = Dict("Chengdu" => ["bloodRiver"])
 emptyTingpai = Dict{Tile, String}()
 # the tile that has just been given out in the current hand
 bufferedTile = EMPTY_TILE
+# number of current hand
+nhand = 0
 
 if PROGRAM_FILE == @__FILE__
     if !isempty(ARGS)

@@ -61,12 +61,17 @@ function initGame()
     global stackTop = length(tileStack)
     # pool of tiles to which players give tiles
     global tilePool = fill(EMPTY_TILE, (nTiles - tilesPerPlayer*4,))
+    nhand = 1
     # tiles for each player, array size = (NUM_PER_PLAYER+1, 4)
     # the extra tile at the end serves as buffer for the tile taken by the player
     playerTiles = vcat([EMPTY_TILE EMPTY_TILE EMPTY_TILE EMPTY_TILE],
                     dealTiles(tilesPerPlayer))
     # the 4 players
     global players = [Player(playerTiles[:,i]) for i in 1:4]
+    global refp = [refPlayer(p) for p in players]
+    for p in refp
+        findTing(p)
+    end
 
     return
 end
