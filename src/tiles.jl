@@ -27,18 +27,10 @@ Tile(code::UInt8) = Tile(>>(code&0xf0, 4), code&0x0f)
 
 # alias for vector of tiles
 TileList = Vector{Tile}
+# empty list of tiles, mainly used for initialization
+const EMPTY_LIST = TileList([])
 # empty tiles, mainly used for initialization
 const EMPTY_TILE = Tile(0x00, 0x00)
-# the tile that has just been given out in the current hand
-bufferedTile = EMPTY_TILE
-# pool of tiles to which players give tiles
-tilePool = TileList([])
-# stack of tiles from which players take tiles
-tileStack = TileList([])
-# index of the tile to be taken from tileStack
-# equals length of tileStack after calling initGame()
-# decrease by 1 after each takeTile()
-stackTop = 0
 
 @inline getType(tile::Tile)  = tile.type
 @inline getNum(tile::Tile) = tile.num

@@ -1,14 +1,12 @@
 # module MahjongEnvironment
-gameStyle = "Chengdu"
-gameMode = ["bloodRiver"]
-defaultMode = Dict("Chengdu" => ["bloodRiver"])
-hupaiRules = Dict("rule" => 0)
 
 include("tiles.jl")
 include("emojis.jl")
 include("player.jl")
+include("game.jl")
+include("playeractions.jl")
 include("interface.jl")
-include("dealer.jl")
+include("hall.jl") # The Hall of Games!
 
 if PROGRAM_FILE == @__FILE__
     if !isempty(ARGS)
