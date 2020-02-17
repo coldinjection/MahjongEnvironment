@@ -26,6 +26,8 @@ mutable struct Player
 end
 
 @inline refPlayer(pIndex::Int) = Ref{Player}(players[pIndex])
+@inline decideQue(p::Ref{Player}, t::UInt8) = (p[].que = t)
+
 # default set of tiles a player can hu (empty)
 const EMPTY_TINGPAI = Dict{Tile, String}()
 # the 4 players

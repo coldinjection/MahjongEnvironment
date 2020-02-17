@@ -5,7 +5,9 @@ defaultMode = Dict("Chengdu" => ["bloodRiver"])
 hupaiRules = Dict("rule" => 0)
 
 include("tiles.jl")
+include("emojis.jl")
 include("player.jl")
+include("interface.jl")
 include("dealer.jl")
 
 if PROGRAM_FILE == @__FILE__

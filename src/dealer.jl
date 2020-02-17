@@ -1,8 +1,8 @@
 function shuffle(tileSet::Vector{Tile})
     len::Int = length(tileSet)
     # do a Fisher–Yates shuffle
-    for i = 1:len
-        index = ceil(Int, rand()*(len-1))
+    for i = len:-1:2
+        index = ceil(Int, rand()*i)
         temp::Tile = tileSet[i]
         tileSet[i] = tileSet[index]
         tileSet[index] = temp
@@ -69,12 +69,11 @@ function initGame()
     return
 end
 
-function playGame()
+@inline next_player(p::Int) = p > 3 ? 1 : p + 1
 
-end
-
-function test()
-    println(EMPTY_TILE)
-    println(stackTop)
-
+function playGame(east::Int = 0)
+    active_player = east
+    active_player == 0 && (active_player = ceil(Int, rand()*4))
+    # ask every player to decide the que type
+    
 end

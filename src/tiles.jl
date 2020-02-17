@@ -44,6 +44,7 @@ stackTop = 0
 @inline getNum(tile::Tile) = tile.num
 @inline getTypes(playerTiles::TileList) = Set(map(getType, playerTiles))
 @inline getNums(playerTiles::TileList) = Set(map(getNum, playerTiles))
+@inline emoji(t::Tile) = EMOJIS[t]
 
 # extend `isless` so that tiles can be sorted
 isless(t1::Tile, t2::Tile) = isless(t1.type, t2.type) ||
