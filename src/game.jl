@@ -8,6 +8,7 @@ mutable struct Game
     hupaiRules::Dict{String, Int}
     players::Vector{Player}
     refp::Vector{Ref{Player}}
+    pnames::Dict{String, Ref{Player}}
     bufferedTile::Tile
     tilePool::Dict{Ref{Player}, TileList}
     tileStack::TileList
@@ -16,7 +17,9 @@ mutable struct Game
         length(pnames) != 4 && error("wrong number of players")
         players = [Player(pnames[i]) for i = 1:4]
         refp = Vector{Ref{Player}}([])
-        new(style, mode, EMPTY_RULES, players, refp, EMPTY_TILE, Dict{Ref{Player}, TileList}(), EMPTY_LIST, 0)
+        pnames = Dict{String, Ref{Player}}()
+        tilePool = Dict{Ref{Player}, TileList}()
+        new(style, mode, EMPTY_RULES, players, refp, pnames, EMPTY_TILE, tilePool, EMPTY_LIST, 0)
     end
 end
 

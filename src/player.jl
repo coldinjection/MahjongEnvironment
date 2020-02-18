@@ -32,6 +32,28 @@ end
 # default set of tiles a player can hu (empty)
 const EMPTY_TINGPAI = Dict{Tile, String}()
 
+function stringify(p::Player)
+    str::String = ""
+    for i = 2:p.playableNum
+        str *= EMOJIS[p.playerTiles[i]]
+    end
+    str *= ";"
+    for t in p.peng
+        str *= EMOJIS[t]
+    end
+    str *= ";"
+    for t in p.gang
+        str *= EMOJIS[t]
+    end
+    str *= ";"
+    for t in p.hu
+        str *= EMOJIS[t]
+    end
+    str *= ";" *string(p.score) * ";"
+    p.isFinished ? (str *= "F") : (str *= "A")
+    return str
+end
+
 function sortTiles(p::Ref{Player})
     # sort the playable tiles
     # empty buffer tile is 0x00 so it will always at index 1
