@@ -22,7 +22,7 @@ mutable struct Game
         refp = Vector{Ref{Player}}([])
         pnames = Dict{String, Ref{Player}}()
         tilePool = Dict{Ref{Player}, TileList}()
-        new(style, mode, EMPTY_RULES, players, refp, pnames, EMPTY_TILE, tilePool, EMPTY_LIST, 0)
+        new(style, mode, EMPTY_RULES, players, refp, pnames, EMPTY_TILE, tilePool, TileList([]), 0)
     end
 end
 
@@ -49,10 +49,10 @@ end
 
 function initGame(game::Game)
     game.refp = [refPlayer(game.players[i]) for i=1:4]
-    tilePool = Dict(game.refp[1] => EMPTY_LIST,
-                    game.refp[2] => EMPTY_LIST,
-                    game.refp[3] => EMPTY_LIST,
-                    game.refp[4] => EMPTY_LIST)
+    tilePool = Dict(game.refp[1] => TileList([]),
+                    game.refp[2] => TileList([]),
+                    game.refp[3] => TileList([]),
+                    game.refp[4] => TileList([]))
     if game.style == "Chengdu"
         nTiles = 108
         tilesPerPlayer = 13
@@ -100,9 +100,16 @@ end
 
 @inline next_player(pi::Int) = pi > 3 ? 1 : pi + 1
 
-function playGame(east::Int = 0)
+function play_a_round(g::Game, east::Int = 0)
     active_player = east
     active_player == 0 && (active_player = ceil(Int, rand()*4))
     # ask every player to decide the que type
-
+    for i = 1:4
+        @async global que = ask_to_play(g.players[i].pname, "QUE!")
+        if que in ("WAN", "TIAO", "TONG")
+            eval(:(g.players[i].queType = $(Meta.parse(que))))
+        else
+            g.players[i].queType = 0x01 << floor(Int, rand()*3)
+        end
+    end
 end

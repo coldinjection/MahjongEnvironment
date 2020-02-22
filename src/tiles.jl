@@ -29,8 +29,6 @@ Tile(code::UInt8) = Tile(>>(code&0xf0, 4), code&0x0f)
 
 # alias for vector of tiles
 TileList = Vector{Tile}
-# empty list of tiles, mainly used for initialization
-const EMPTY_LIST = TileList([])
 # empty tiles, mainly used for initialization
 const EMPTY_TILE = Tile(0x00, 0x00)
 

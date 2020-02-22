@@ -20,9 +20,9 @@ mutable struct Player
     # the buffer tile is always at playerTiles[1]
     # tiles become unplayable when they are peng(ed) or gang(ed)
     Player(pname::String) =
-        new(pname, EMPTY_LIST, EMPTY_TINGPAI,
-            EMPTY_LIST, EMPTY_LIST, EMPTY_LIST,
-            EMPTY_LIST, EMPTY_LIST, EMPTY_LIST,
+        new(pname, TileList([]), EMPTY_TINGPAI,
+            TileList([]), TileList([]), TileList([]),
+            TileList([]), TileList([]), TileList([]),
             0, 0x00, 0, false)
 end
 
@@ -63,9 +63,9 @@ end
 # find tiles that form pairs, triples and quadruples
 function findGroups(p::Ref{Player})
     sortTiles(p)
-    p[].pairs      = EMPTY_LIST
-    p[].triples    = EMPTY_LIST
-    p[].quadruples = EMPTY_LIST
+    p[].pairs      = TileList([])
+    p[].triples    = TileList([])
+    p[].quadruples = TileList([])
     i::Int = 1
     while i < p[].playableNum
         t::Tile = p[].playerTiles[i]

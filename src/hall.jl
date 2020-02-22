@@ -221,6 +221,6 @@ end
 httpresp(req::Request) = HTML_FILE |> Response
 const server = WebSockets.ServerWS(httpresp, gatekeeper)
 
-function run()
-    @async WebSockets.serve(server, SV_IP, SV_PORT)
+function run_server(ip = SV_IP, port = SV_PORT)
+    @async WebSockets.serve(server, ip, port)
 end
