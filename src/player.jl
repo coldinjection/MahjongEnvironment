@@ -33,24 +33,23 @@ end
 const EMPTY_TINGPAI = Dict{Tile, String}()
 
 function stringify(p::Player)
-    str::String = ""
-    for i = 2:p.playableNum
-        str *= EMOJIS[p.playerTiles[i]]
-    end
-    str *= ";"
+    str::Vector{String} = ["","","","","","","",""]
+    str[1] = p.pname
+    p.isFinished ? (str[2] = "FIN") : (str[2] = "ACT")
+    str[3] = string(p.score)
     for t in p.peng
-        str *= EMOJIS[t]
+        str[4] *= EMOJIS[t]
     end
-    str *= ";"
     for t in p.gang
-        str *= EMOJIS[t]
+        str[5] *= EMOJIS[t]
     end
-    str *= ";"
     for t in p.hu
-        str *= EMOJIS[t]
+        str[6] *= EMOJIS[t]
     end
-    str *= ";" *string(p.score) * ";"
-    p.isFinished ? (str *= "F") : (str *= "A")
+    str[7] = TYPES[p.queType]
+    for i = 2:p.playableNum
+        str[8] *= EMOJIS[p.playerTiles[i]]
+    end
     return str
 end
 
@@ -64,9 +63,9 @@ end
 # find tiles that form pairs, triples and quadruples
 function findGroups(p::Ref{Player})
     sortTiles(p)
-    p[].pairs      = TileList([])
-    p[].triples    = TileList([])
-    p[].quadruples = TileList([])
+    p[].pairs      = EMPTY_LIST
+    p[].triples    = EMPTY_LIST
+    p[].quadruples = EMPTY_LIST
     i::Int = 1
     while i < p[].playableNum
         t::Tile = p[].playerTiles[i]
@@ -167,59 +166,4 @@ function findHu(tiles::Vector{Tile}, n::Vector{Int},
         # don't push anything if t cannot be grouped (no matched rule)
         return
     end
-end
-
-# check if the player can hu and return the matched hupai rule with max socre
-function checkHu(p::Ref{Player})
-    findGroups(p)
-    existing_types = getTypes(p[].playerTiles)
-    p[].queType in existing_types && return ""
-
-    matchedRules::Dict{Vector{TileList}, String} =
-                    Dict{Vector{TileList}, String}()
-    existing_nums = getNums(p[].playerTiles)
-
-    findHu(p[].playerTiles[1:p[].playableNum],
-            [0, 0, length(p[].peng) + length(p[].gang)],
-            matchedRules, Vector{TileList}([]))
-
-    nmatches::Int = length(matchedRules)
-    nmatches == 0 && return ""
-    matches = keys(matchedRules)
-
-    is19::Bool = issubset(existing_nums, Set([0x01, 0x02, 0x03, 0x07, 0x08, 0x09]))
-    is19 && issubset(getNums(p[].peng), Set([0x01, 0x02])) || (is19 = false)
-    is19 && issubset(getNums(p[].gang), Set([0x01, 0x02])) || (is19 = false)
-    for r in matches
-        if is19
-            for g in r
-                0x01 in getNums(g) || 0x09 in getNums(g) ||
-                    (is19 = false; break)
-            end
-        end
-        if matchedRules[r] == "basic"
-            is19 && (matchedRules[r] = "onenine")
-        elseif matchedRules[r] == "triples"
-            existing_nums == Set([0x02, 0x05, 0x08]) &&
-                (matchedRules[r] = "triples258")
-        elseif length(p[].quadruples) > 1
-            matchedRules[r] = "dragonpairs"
-        end
-    end
-    if length(existing_types)==1
-        # a set of tiles cannot be both triples258 and pure
-        # so "puretriples258" will never exist
-        for r in matches
-            matchedRules[r] = "pure" * matchedRules[r]
-        end
-    end
-    maxHu::Pair{Vector{TileList}, String} = pop!(matchedRules)
-    if nmatches > 1
-        for r in matchedRules
-            if hupaiRules[r.second] > hupaiRules[maxHu.second]
-                maxHu = r
-            end
-        end
-    end
-    return maxHu.second#, maxHu.first
 end

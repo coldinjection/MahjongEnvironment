@@ -7,6 +7,8 @@ const TIAO  = 0b00000010 # 0x02
 const TONG  = 0b00000100 # 0x04
 const EXTRA = 0b00001000 # 0x08
 
+const TYPES = Dict(0x01 => "WAN", 0x02 => "TIAO", 0x04 => "TONG", 0x08 => "EXTRA", 0x00 => "UNDEF")
+
 struct Tile
     type::UInt8
     num::UInt8

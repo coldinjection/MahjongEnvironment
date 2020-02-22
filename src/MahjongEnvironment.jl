@@ -5,8 +5,8 @@ include("emojis.jl")
 include("player.jl")
 include("game.jl")
 include("playeractions.jl")
-include("interface.jl")
 include("hall.jl") # The Hall of Games!
+include("interface.jl")
 
 if PROGRAM_FILE == @__FILE__
     if !isempty(ARGS)

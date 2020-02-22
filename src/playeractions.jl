@@ -1,3 +1,58 @@
+# check if the player can hu and return the matched hupai rule with max socre
+function checkHu(g::Game, p::Ref{Player})
+    findGroups(p)
+    existing_types = getTypes(p[].playerTiles)
+    p[].queType in existing_types && return ""
+
+    matchedRules::Dict{Vector{TileList}, String} =
+                    Dict{Vector{TileList}, String}()
+    existing_nums = getNums(p[].playerTiles)
+
+    findHu(p[].playerTiles[1:p[].playableNum],
+            [0, 0, length(p[].peng) + length(p[].gang)],
+            matchedRules, Vector{TileList}([]))
+
+    nmatches::Int = length(matchedRules)
+    nmatches == 0 && return ""
+    matches = keys(matchedRules)
+
+    is19::Bool = issubset(existing_nums, Set([0x01, 0x02, 0x03, 0x07, 0x08, 0x09]))
+    is19 && issubset(getNums(p[].peng), Set([0x01, 0x02])) || (is19 = false)
+    is19 && issubset(getNums(p[].gang), Set([0x01, 0x02])) || (is19 = false)
+    for r in matches
+        if is19
+            for g in r
+                0x01 in getNums(g) || 0x09 in getNums(g) ||
+                    (is19 = false; break)
+            end
+        end
+        if matchedRules[r] == "basic"
+            is19 && (matchedRules[r] = "onenine")
+        elseif matchedRules[r] == "triples"
+            existing_nums == Set([0x02, 0x05, 0x08]) &&
+                (matchedRules[r] = "triples258")
+        elseif length(p[].quadruples) > 1
+            matchedRules[r] = "dragonpairs"
+        end
+    end
+    if length(existing_types)==1
+        # a set of tiles cannot be both triples258 and pure
+        # so "puretriples258" will never exist
+        for r in matches
+            matchedRules[r] = "pure" * matchedRules[r]
+        end
+    end
+    maxHu::Pair{Vector{TileList}, String} = pop!(matchedRules)
+    if nmatches > 1
+        for r in matchedRules
+            if g.hupaiRules[r.second] > g.hupaiRules[maxHu.second]
+                maxHu = r
+            end
+        end
+    end
+    return maxHu.second#, maxHu.first
+end
+
 # find tiles the player can hu
 function findTing(game::Game, p::Ref{Player})
     p[].tingPai = EMPTY_TINGPAI
@@ -10,7 +65,7 @@ function findTing(game::Game, p::Ref{Player})
         t in checked && continue
         # put t into buffer
         p[].playerTiles[1] = t
-        hu = checkHu(p)
+        hu = checkHu(game, p)
         push!(checked, t)
         if hu != ""
             push!(p[].tingPai, t => hu)
@@ -143,4 +198,10 @@ function huPai(game::Game, p::Ref{Player}, tile::Tile, sourcePlayer::Int = 0)
         p[].score += score
         game.players[sourcePlayer].score -= score
     end
+end
+
+# decide the que type
+function ding_que(p::Ref{Player}, type::UInt8)
+    p[].queType = type
+    return
 end

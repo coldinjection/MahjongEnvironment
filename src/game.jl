@@ -1,5 +1,8 @@
+# "matched_hupai_rule" => scores_awarded
 const EMPTY_RULES = Dict("rule" => 0)
 const DEFAULT_STYLE = "Chengdu"
+# "finish&leave" => false means 血流成河, "finish&leave" => true means 血战到底;
+# "exchange3" => true means 换三张
 const DEFAULT_MODE = Dict("finish&leave" => false, "exchange3" => false)
 
 mutable struct Game
@@ -91,6 +94,7 @@ function initGame(game::Game)
         game.players[i].playableNum = tilesPerPlayer + 1
         findTing(game, game.refp[i])
     end
+    update_info(game)
     return
 end
 

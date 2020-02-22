@@ -1,6 +1,5 @@
-using Sockets
+# using Sockets
 using WebSockets
-using Dates
 import WebSockets:Response, Request
 
 const SV_IP = "127.0.0.1"
@@ -13,33 +12,52 @@ const MAX_TBL = 40 # maximun number of tables (including those in game)
 table_game = Dict{String, Game}()
 # mapping from player names to table numbers
 table_pnames = Dict{String, Vector{String}}()
-# mapping from player names to connections
-pname_connection = Dict{String, WebSocket}()
 # mapping from connections to player names
 connection_pname = Dict{WebSocket, String}()
+# mapping from player names to connections
+pname_connection = Dict{String, WebSocket}()
+# mapping from player names to the tables they are in
+pname_table = Dict{String, String}()
+# mapping from players and their gameplay related msg (last sent only)
+pname_msg = Dict{String, Channel}()
 # value is true if the key WebSocket is expected to send msg to server
-wanted_to_send = Dict{WebSocket, Bool}()
+wanted_to_send = Dict{String, Bool}()
 # number of the last table created
 lastbl = 700
 # match making queue, list of pnames
 mmq = Vector{String}([])
 
 function pexit(ws::WebSocket, pname::String)
+    global pname_msg
     global pname_connection
     global connection_pname
     global wanted_to_send
+    global pname_table
     try
         pop!(pname_connection, pname)
+        pop!(pname_msg, pname)
         pop!(connection_pname, ws)
-        pop!(wanted_to_send, ws)
+        pop!(wanted_to_send, pname)
     catch KeyError
         # do nothing
+    end
+    try
+        tblnum = pop!(pname_table, pname)
+        for i = 1:length(table_pnames[tblnum])
+            if table_pnames[tblnum][i] == pname
+                deleteat!(table_pnames[tblnum], i)
+                break
+            end
+        end
+    catch
+        # player not in a table, do nothing
     end
 end
 
 function make_matches()
     global table_pnames
     global table_game
+    global pname_table
     global mmq
     # make a table if there are 4 players in `mmq`
     if length(mmq) > 3 && length(table_pnames) < MAX_TBL
@@ -86,25 +104,27 @@ function build_pname(msg::String)
 end
 
 function chop(msg)
-    chopped = split(msg, "!", keepempty = false)
+    chopped = split(msg, "!", keepempty = true)
     try
         return (String(chopped[1]), String(chopped[2]))
     catch BoundsError
-        return ("", "")
+        return (String(chopped[1]), "")
     end
 end
 
 function coroutine(ws)
+    global pname_msg
     global pname_connection
     global connection_pname
     global wanted_to_send
     global table_pnames
     global table_game
+    global pname_table
     global mmq
     pname = ""
     while isopen(ws)
         data, success = readguarded(ws)
-        success || (println("read failed"); break)
+        success || (println("$pname disconnected"); break)
         string_data = String(data)
         println(pname, " sent: ", string_data)
         header, msg = chop(string_data)
@@ -117,24 +137,27 @@ function coroutine(ws)
                     # register the client
                     push!(pname_connection, pname => ws)
                     push!(connection_pname, ws => pname)
-                    push!(wanted_to_send, ws => false)
+                    push!(wanted_to_send, pname => false)
+                    push!(pname_msg, pname => Channel{String}(1))
                 else
-                    println("$pname is lost")
+                    println("$pname disconnected")
                     break
                 end
             end
-        elseif header == "GM"
-            if wanted_to_send[ws]
-                # forward the msg to game interface
-
+        elseif header == "GM" && !isempty(msg)
+            if wanted_to_send[pname]
+                # empty the channel if it's not empty
+                isready(pname_msg[pname]) && take!(pname_msg[pname])
+                # put the msg in a channel for the game interface to take
+                put!(pname_msg[pname], msg)
             end
         elseif header == "JUSTJOIN"
             # put client in match making queue
-            if writeguarded(ws, "INQUEUE!0")
+            if writeguarded(ws, "INQUEUE!")
                 push!(mmq, pname)
                 make_matches()
             else
-                println("$pname is lost")
+                println("$pname disconnected")
                 break
             end
         elseif header == "JOINTBL"
@@ -144,6 +167,7 @@ function coroutine(ws)
                 nplayers = length(players)
                 if nplayers < 4
                     push!(table_pnames[table_num], pname)
+                    push!(pname_table, pname => table_num)
                     players = table_pnames[table_num]
                     pnamestring = ""
                     for p in players
@@ -172,6 +196,7 @@ function coroutine(ws)
                 if tblnum != "NONE!"
                     writeguarded(ws, "GETIN!$tblnum") &&
                     push!(table_pnames, tblnum => [pname])
+                    push!(pname_table, pname => tblnum)
                 else
                     writeguarded(ws, "ERR!No more table allowed")
                 end
@@ -188,10 +213,10 @@ end
 
 function gatekeeper(httpreq, websoc)
     origin = WebSockets.origin(httpreq)
-    println("new connection: ", origin)
+    println("new connection from: ", origin)
     # all connections accepted
     coroutine(websoc)
-    println("coroutine ended: ", origin)
+    println(origin, " is out")
 end
 httpresp(req::Request) = HTML_FILE |> Response
 const server = WebSockets.ServerWS(httpresp, gatekeeper)
