@@ -167,3 +167,77 @@ function findHu(tiles::Vector{Tile}, n::Vector{Int},
         return
     end
 end
+
+# peng a tile given by another player
+# the player will have to give out a tile after peng
+# so always call giveTile(p, ti) immediately after pengPai(p)
+function pengPai(p::Ref{Player}, tile::Tile)
+    push!(p[].peng, tile)
+    # remove the buffer because a tile will be given out immediately
+    # leaving an EMPTY_TILE at its original position
+    deleteat!(p[].playerTiles, 1)
+    # remove the other 2 peng tiles
+    for i = 1:p[].playableNum
+        if p[].playerTiles[i] == tile
+            deleteat!(p[].playerTiles[i+1])
+            deleteat!(p[].playerTiles[i])
+            break
+        end
+    end
+    # decrease playableNum by 3 (2 removed tiles, 1 removed buffer)
+    p[].playableNum -= 3
+    return
+end
+
+# the player plays the next hand (take and give a tile) after gang
+# gang an existing quadruple in playerTiles
+function gangPai(p::Ref{Player}, gt::Tile)
+    push!(p[].gang, gt)
+    if gt in p[].peng
+        # 补杠, the tile must be at playerTiles[1]
+        p[].playerTiles[1] = EMPTY_TILE
+        # remove gt from peng
+        for i = 1:length(p[].peng)
+            if p[].peng[i] == gt
+                deleteat!(p[].peng, i)
+                break
+            end
+        end
+    elseif gt == p[].playerTiles[1]
+        # when the gang tile is the one just taken
+        p[].playerTiles[1] = EMPTY_TILE
+        for i = 1:p[].playableNum
+            # remove the other 3
+            if p[].playerTiles[i] == gt
+                deleteat!(p[].playerTiles[i+2])
+                deleteat!(p[].playerTiles[i+1])
+                deleteat!(p[].playerTiles[i])
+                break
+            end
+        end
+        p[].playableNum -= 3
+    else
+        # when the gang tile is in existing quadruples
+        # remove the 4 gang tiles
+        for i = 1:p[].playableNum
+            if p[].playerTiles[i] == gt
+                deleteat!(p[].playerTiles[i+3])
+                deleteat!(p[].playerTiles[i+2])
+                deleteat!(p[].playerTiles[i+1])
+                deleteat!(p[].playerTiles[i])
+                break
+            end
+        end
+        sortTiles(p)
+        # add a new buffer, playableNum += 1
+        insert!(p[].playerTiles, 1, EMPTY_TILE)
+        # p[].playableNum += 3 (4 removed, 1 new buffer)
+        p[].playableNum -= 3
+    end
+end
+
+# hu pai and stop playing
+function huPai(p::Ref{Player}, tile::Tile)
+    p[].isFinished = true
+    push!(p[].hu, tile)
+end

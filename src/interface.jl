@@ -3,31 +3,32 @@ using Dates
 # time for the player to make a move
 const TIME_OUT = Dates.Second(15)
 
-# send updated player states to the players
-# called after a hand is over (before the next player takes a tile)
-function update_info(g::Game)
-    player_strings = [stringify(p) for p in g.players]
-    for ps in player_strings
-        pname::String = ps[1]
-        info::String = "UPDATE!"
-        # the player's own states
-        for i = 1:7
-            info *= ps[i] * ","
-        end
-        info *= ps[8] * ";"
-        # the other players' states
-        for pstr in player_strings
-            pstr[1] == pname && continue
-            for i = 1:6
-                info *= pstr[i] * ","
+# tell all players the action and new state of player `p`
+function update_info(g::Game, player::Player, act::Tuple{Int,String,Tile,Int})
+    info::String = "UPDATE!ACT:" * 
+                    string(act[1]) * act[2] * EMOJIS[act[3]] * 
+                    string(act[4]) * ";STATE:"
+    player_strings = stringify(player)
+    for i = 1:7
+        info *= player_strings[i] * ","
+    end
+    info_private::String = info * player_strings[8]
+    info_public::String  = info * string(length(player_strings[8]))
+    for p in g.players
+        if p.pname == player.pname
+            try
+                # println(info)
+                writeguarded(pname_connection[p.pname], info_private)
+            catch
+                # ignore if the player has disconnected
             end
-            info *= pstr[7] * ";"
-        end
-        try
-            # println(info)
-            writeguarded(pname_connection[pname], info)
-        catch KeyError
-            # ignore if the player has disconnected
+        else
+            try
+                # println(info)
+                writeguarded(pname_connection[p.pname], info_public)
+            catch KeyError
+                # ignore if the player has disconnected
+            end
         end
     end
     return
@@ -41,24 +42,24 @@ function ask_to_play(pname::String, question::String)
     try
         if writeguarded(pname_connection[pname], question)
             wanted_to_send[pname] = true
-            response = "RAND"
+            response = "AUTO"
             @async begin
                 sleep(TIME_OUT.value)
-                # put "RAND" in the channel
+                # put "AUTO" in the channel
                 # if the player doesn't response in time
-                wanted_to_send[pname] && put!(pname_msg[pname], "RAND")
+                wanted_to_send[pname] && put!(pname_msg[pname], "AUTO")
             end
             response = take!(pname_msg[pname])
             wanted_to_send[pname] = false
             return response
         else
-            # tell the system to make a random move
+            # tell the system to make the default option
             # if the player is unreachable
-            return "RAND"
+            return "AUTO"
         end
     catch KeyError
-        # the system plays randomly if the player has disconnected
-        return "RAND"
+        # the system always make the default option if the player has disconnected
+        return "AUTO"
     end
 end
 
@@ -75,10 +76,12 @@ end
 # return options a player can make after taking a tile from the stack
 function this_hand_options(p::Player)
     options::Vector{String} = ["GIVE"]
-    if p.playerTiles[1] in p.triples || !isempty(p.quadruples)
+    if p.playerTiles[1] in p.triples ||
+        p.playerTiles[1] in p.peng ||
+        !isempty(p.quadruples)
         push!(options, "GANG")
     end
-    haskey(p.tingPai, p.playerTiles[1]) && push!(options, "HU")
+    haskey(p.tingPai, p.playerTiles[1]) && push!(options, "HULE")
     return options
 end
 
@@ -87,6 +90,6 @@ function other_players_options(p::Ref{Player}, bt::Tile)
     options::Vector{String} = ["PASS"]
     bt in p.pairs && push!(options, "PENG")
     bt in p.triples && push!(options, "GANG")
-    haskey(p.tingPai, bt) && push!(options, "HU")
+    haskey(p.tingPai, bt) && push!(options, "HULE")
     return options
 end
