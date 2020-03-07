@@ -111,9 +111,93 @@ function play_a_round(g::Game)
     # index 0 refers to all players
     record::Vector{Tuple{Int, String, Tile, Int}} = []
     # record of a single hand, appended to `record` after each hand
-    hand_rec::Vector{Tuple{Int, String, Tile, Int}} = []
-    function update_info(i::Int)
+    hand_rec::Vector{Tuple{Int, String, Tile, Int}} = [(0,"START",EMPTY_TILE,0)]
+    function update_game_info(i::Int)
         update_info(g, g.players[i], hand_rec[end])
+    end
+    function update_scores()
+        action::String = ""
+        reason::String = ""
+        # winner::Int = -1
+        # loser::Int = -1
+        # score::Int = 0
+        transactions::Vector{Tuple{Int, Int, Int}} = []
+        if length(hand_rec) > 1
+            # the active player gave out a tile and the other player played
+            # OR the active player gang(ed) a tile previously peng(ed) and got
+            # robbed by another player
+            for i = 2:length(hand_rec)
+                action = hand_rec[i][2]
+                winner = hand_rec[i][1]
+                loser = hand_rec[i][3]
+                if action == "GANG"
+                    reason = "GANG"
+                    score *= 2^(length(g.players[winner].gang) - 1)
+                elseif action == "HULE"
+                    reason = g.players[winner].tingPai[g.bufferedTile]
+                    score = g.hupaiRules[reason]
+                    # 带根
+                    score *= 2^length(g.players[winner].gang)
+                    # 杠上炮
+                    record[end-1][2] == "GANG" && (score *= 2)
+                    # 抢杠
+                    hand_rec[1][2] == "GANG" && (score *= 2)
+                end
+                push!(transactions, (winner, loser, score))
+            end
+        else
+            # only the active player played
+            action = hand_rec[1][2]
+            winner = active_player # also = hand_rec[1][1]
+            loser = 0 # also = hand_rec[1][3]
+            score = 0
+            if action == "HULE"
+                # the active player hu(ed) (自摸)
+                reason = g.players[winner].tingPai[t]
+                score = 2 * g.hupaiRules[reason]
+                # 带根
+                score *= 2^length(g.players[winner].gang)
+                # 杠上花
+                record[end][1] == winner && (score *= 2)
+            elseif action == "GANG"
+                # the active player gang(ed)
+                if t in g.players[winner].triples || t in g.players[winner].quadruples
+                    # 暗杠
+                    score = 2
+                else
+                    # 补杠
+                    score = 1
+                end
+                score *= 2^(length(g.players[winner].gang) - 1)
+            end
+            push!(transactions, (winner, loser, score))
+        end
+        for trans in transactions
+            winner = trans[1]
+            loser = trans[2]
+            score = trans[3]
+            # change the scores and send the messages to the players
+            if loser == 0
+                for i = 1:4
+                    i == winner && continue
+                    g.mode["finish&leave"] && g.players[i].isFinished && continue
+                    g.players[i].score -= score
+                    g.players[winner].score += score
+                end
+            else
+                g.players[loser].score -= score
+                g.players[winner].score += score
+            end
+        end
+        if length(transactions) > 1
+            msg::String = "SCORE!"
+            for p in g.players
+                msg *= p.pname * ":" * string(p.score) * ";"
+            end
+            for p in g.players
+                writeguarded(pname_connection[p.pname], msg)
+            end
+        end
     end
     # true if a player has given up hu
     # the player cannot hu after giving up hu until taking a new tile
@@ -121,14 +205,16 @@ function play_a_round(g::Game)
                                     3 => false, 4 => false)
 
     # ask every player to decide the que type
-    for i = 1:4
-        que::String = "AUTO"
-        @async que = ask_to_play(g.players[i].pname, "QUE!")
-        if que in ("WAN", "TIAO", "TONG")
-            eval(:(g.players[i].queType = $(Meta.parse(que))))
-        else
-            # randomly select one if the player doesn't make a valid option
-            g.players[i].queType = 0x01 << floor(Int, rand()*3)
+    @sync for i = 1:4
+        @async begin
+            que::String = "AUTO"
+            que = ask_to_play(g.players[i].pname, "QUE!")
+            if que in ("WAN", "TIAO", "TONG")
+                eval(:(g.players[i].queType = $(Meta.parse(que))))
+            else
+                # randomly select one if the player doesn't make a valid option
+                g.players[i].queType = 0x01 << floor(Int, rand()*3)
+            end
         end
     end
 
@@ -171,7 +257,7 @@ function play_a_round(g::Game)
             resp_this = "HULE"
         else
             # aks the player to make an option
-            @async resp_this = ask_to_play(g.players[active_player].pname,
+            resp_this = ask_to_play(g.players[active_player].pname,
                                             build_question(opt_this, t))
         end
         # make the default option if the response is somehow not expected
@@ -194,13 +280,13 @@ function play_a_round(g::Game)
             t_ind > g.players[active_player].playableNum && (t_ind = 1)
             giveTile(g, g.refp[active_player], t_ind)
             push!(hand_rec, (active_player, "GIVE", g.bufferedTile, 0))
-            update_info(active_player)
+            update_game_info(active_player)
             findTing(g, g.refp[active_player])
         elseif resp_this[1:4] == "HULE"
             # hupai, 自摸
             huPai(g.refp[active_player], t)
             push!(hand_rec, (active_player, "HULE", t, 0))
-            update_info(active_player)
+            update_game_info(active_player)
             # calculate the scores
             update_scores()
             # the next player plays
@@ -225,27 +311,29 @@ function play_a_round(g::Game)
                     # the tile can be robbed by another player if
                     # that player can hu this tile (补杠可被抢杠)
                     ask_hu::String = "PLAY!ON:$(EMOJIS[gt]);HULE;"
-                    # this record will be ignored in update_info if there are
+                    # this record will be ignored in update_game_info if there are
                     # more record(s) after it
                     push!(hand_rec, (active_player, "GANG", gt, 0))
                     # tell the players the active player tries to gang
                     # but the player has not gang(ed) at this point
-                    update_info(active_player)
-                    for i = 1:4
+                    update_game_info(active_player)
+                    @sync for i = 1:4
                         i == active_player && continue
                         resp_rob = ""
                         if haskey(g.players[i].tingPai, gt)
-                            @async resp_rob = ask_to_play(g.players[i].pname, ask_hu)
-                            if resp_rob == "HULE"
-                                push!(hand_rec, (i, "HULE", gt, active_player))
-                                update_info(i)
+                            @async begin
+                                resp_rob = ask_to_play(g.players[i].pname, ask_hu)
+                                if resp_rob == "HULE"
+                                    push!(hand_rec, (i, "HULE", gt, active_player))
+                                    update_game_info(i)
+                                end
                             end
                         end
                     end
                     if hand_rec[end][1] == active_player
-                        # the active player gangs if none hu(ed) this tile
+                        # the active player gangs if no one hu(ed) this tile
                         gangPai(g.refp[active_player], gt)
-                        update_info(active_player)
+                        update_game_info(active_player)
                         update_scores()
                         findTing(g, g.refp[active_player])
                         vcat(record, hand_rec)
@@ -265,7 +353,7 @@ function play_a_round(g::Game)
                     # gang a tile
                     gangPai(g.refp[active_player], gt)
                     push!(hand_rec, (active_player, "GANG", gt, 0))
-                    update_info(active_player)
+                    update_game_info(active_player)
                     # calculate the scores
                     update_scores()
                     findTing(g, g.refp[active_player])
@@ -277,17 +365,17 @@ function play_a_round(g::Game)
                 # give out the tile just taken if the gang is failed
                 giveTile(g, g.refp[active_player], 1)
                 push!(hand_rec, (active_player, "GIVE", g.bufferedTile, 0))
-                update_info(active_player)
+                update_game_info(active_player)
                 findTing(g, g.refp[active_player])
             end
         end
 
         # other players respond on the tile given out by active player
-        for i = 1:4
+        @sync for i = 1:4
             # skip the active player
             i == active_player && continue
             # find option(s) the player can make
-            opt_i = other_players_options(g.refp[i], g.bufferedTile)
+            opt_i = other_players_options(g.players[i], g.bufferedTile)
             # remove "HULE" if guoshui is true for this player
             if opt_i[end] == "HULE" && guoshui[i]
                 # "HULE" is always at the end of the array, so just pop! it
@@ -295,147 +383,66 @@ function play_a_round(g::Game)
             end
             # skip if the only option is "PASS"
             opt_i == ["PASS"] && continue
-            # ask the question and get the response
-            @async resp_i = ask_to_play(g.players[i].pname,
-                        build_question(opt_i, g.bufferedTile))
-            # will not process resp_i if another made an option in advance
-            # an exception is that resp_i and all previous response(s) are "HULE"
-            if length(hand_rec) < 2 || (hand_rec[end][2]=="HULE" && resp_i=="HULE")
-                # make the default option if resp_i is not an available option
-                resp_i in opt_i || (resp_i = "AUTO")
-                # the default option is to pass
-                resp_i == "AUTO" && (resp_i = "PASS")
-                # guoshui becomes true if the player gives up hu
-                opt_i[end] == "HULE" && resp_i != "HULE" && (guoshui[i] = true)
+            @async begin
+                # ask the question and get the response
+                resp_i = ask_to_play(g.players[i].pname,
+                            build_question(opt_i, g.bufferedTile))
+                # will not process resp_i if another made an option in advance
+                # an exception is that resp_i and all previous response(s) are "HULE"
+                if length(hand_rec) < 2 || (hand_rec[end][2]=="HULE" && resp_i=="HULE")
+                    # make the default option if resp_i is not an available option
+                    resp_i in opt_i || (resp_i = "AUTO")
+                    # the default option is to pass
+                    resp_i == "AUTO" && (resp_i = "PASS")
+                    # guoshui becomes true if the player gives up hu
+                    opt_i[end] == "HULE" && resp_i != "HULE" && (guoshui[i] = true)
 
-                # process the response
-                if resp_i == "PENG"
-                    pengPai(g.refp[i], g.bufferedTile)
-                    push!(hand_rec, (i, "PENG", g.bufferedTile, active_player))
-                    update_info(i)
-                    # give out a tile after peng
-                    to_give::Int = 10000
-                    @async to_give = ask_to_play(g.players[i].pname,
-                                                "PLAY!ON:PENG;GIVE;")
-                    if to_give > g.players[i].playableNum
-                        # randomly select a valid number if the one given
-                        # by the player is not valid
-                        to_give = ceil(Int, rand() * (g.players[i].playableNum))
+                    # process the response
+                    if resp_i == "PENG"
+                        pengPai(g.refp[i], g.bufferedTile)
+                        push!(hand_rec, (i, "PENG", g.bufferedTile, active_player))
+                        update_game_info(i)
+                        # give out a tile after peng
+                        to_give::Int = 10000
+                        to_give = ask_to_play(g.players[i].pname,
+                                                    "PLAY!ON:PENG;GIVE;")
+                        if to_give > g.players[i].playableNum
+                            # randomly select a valid number if the one given
+                            # by the player is not valid
+                            to_give = ceil(Int, rand() * (g.players[i].playableNum))
+                        end
+                        giveTile(g, g.refp[i], to_give)
+                        push!(hand_rec, (i, "GIVE", g.bufferedTile, 0))
+                        update_game_info(i)
+                        findTing(g, g.refp[i])
+                        # the nextp player plays
+                        active_player = next_player(i)
+                    elseif resp_i == "GANG"
+                        gangPai(g.refp[i], g.bufferedTile)
+                        push!(hand_rec, (i, "GANG", g.bufferedTile, active_player))
+                        update_game_info(i)
+                        findTing(g, g.refp[i])
+                        active_player = i
+                    elseif resp_i == "HULE"
+                        # hu will not take effect if another player
+                        # has peng(ed) the tile in advance
+                        huPai(g.refp[i], g.bufferedTile)
+                        push!(hand_rec, (i, "HULE", g.bufferedTile, active_player))
+                        update_game_info(i)
+                        active_player = next_player(i)
                     end
-                    giveTile(g, g.refp[i], to_give)
-                    push!(hand_rec, (i, "GIVE", g.bufferedTile, 0))
-                    update_info(i)
-                    findTing(g, g.refp[i])
-                    # the nextp player plays
-                    active_player = next_player(i)
-                elseif resp_i == "GANG"
-                    gangPai(g.refp[i], g.bufferedTile)
-                    push!(hand_rec, (i, "GANG", g.bufferedTile, active_player))
-                    update_info(i)
-                    findTing(g, g.refp[i])
-                    active_player = i
-                elseif resp_i == "HULE"
-                    # hu will not take effect if another player
-                    # has peng(ed) the tile in advance
-                    huPai(g.refp[i], g.bufferedTile)
-                    push!(hand_rec, (i, "HULE", g.bufferedTile, active_player))
-                    update_info(i)
-                    active_player = next_player(i)
                 end
             end
         end
         # calculate the scores
         update_scores()
         vcat(record, hand_rec)
+        active_player = next_player(active_player)
     end
     # round finished
-
-
-    function update_scores()
-        action::String = ""
-        reason::String = ""
-        # winner::Int = -1
-        # loser::Int = -1
-        # score::Int = 0
-        transactions::Vector{Tuple{Int, Int, Int}} = []
-        if length(hand_rec) > 1
-            # the active player gave out a tile and the other player played
-            # OR the active player gang(ed) a tile previously peng(ed) and got
-            # robbed by another player
-            for i = 2:length(hand_rec)
-                action = hand_rec[i][2]
-                winner = hand_rec[i][1]
-                loser = hand_rec[i][3]
-                if action == "GANG"
-                    reason = "GANG"
-                    score *= 2^(length(g.players[winner].gang) - 1)
-                elseif action == "HULE"
-                    reason = g.players[winner].tingPai[g.bufferedTile]
-                    score = g.hupaiRules[reason]
-                    # 带根
-                    score *= 2^length(g.players[winner].gang)
-                    # 杠上炮
-                    record[end-1][2] == "GANG" && (score *= 2)
-                    # 抢杠
-                    hand_rec[1][2] == "GANG" && (score *= 2)
-                end
-                push!(transactions, (winner, loser, score))
-            end
-        else
-            # only the active player played
-            action = hand_rec[1][2]
-            winner = active_player # also = hand_rec[1][1]
-            loser = 0 # also = hand_rec[1][3]
-            if action == "HULE"
-                # the active player hu(ed) (自摸)
-                reason = g.players[winner].tingPai[t]
-                score = 2 * g.hupaiRules[reason]
-                # 带根
-                score *= 2^length(g.players[winner].gang)
-                # 杠上花
-                record[end][1] == winner && (score *= 2)
-            elseif action == "GANG"
-                # the active player gang(ed)
-                if t in g.players[winner].triples || t in g.players[winner].quadruples
-                    # 暗杠
-                    score = 2
-                else
-                    # 补杠
-                    score = 1
-                end
-                score *= 2^(length(g.players[winner].gang) - 1)
-            end
-            push!(transactions, (winner, loser, score))
-        end
-        for trans in transactions
-            winner = tran[1]
-            loser = tran[2]
-            score = tran[3]
-            # change the scores and send the messages to the players
-            if loser == 0
-                for i = 1:4
-                    i == winner && continue
-                    g.mode["finish&leave"] && g.players[i].isFinished && continue
-                    g.players[i].score -= score
-                    g.players[winner].score += score
-                end
-            else
-                g.players[loser].score -= score
-                g.players[winner].score += score
-            end
-        end
-        if length(transactions) > 1
-            msg::String = "SCORE!"
-            for p in g.players
-                msg *= p.pname * ":" * string(p.score) * ";"
-            end
-            for p in g.players
-                writeguarded(pname_connection[p.pname], msg)
-            end
-        end
-    end
 end
 
+# call this with `@async`
 function play_game(g::Game)
     while true
         player_left::Bool = false

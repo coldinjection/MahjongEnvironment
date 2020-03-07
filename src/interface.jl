@@ -86,7 +86,7 @@ function this_hand_options(p::Player)
 end
 
 # return options a player can make after another player gives out a tile
-function other_players_options(p::Ref{Player}, bt::Tile)
+function other_players_options(p::Player, bt::Tile)
     options::Vector{String} = ["PASS"]
     bt in p.pairs && push!(options, "PENG")
     bt in p.triples && push!(options, "GANG")
