@@ -4,8 +4,16 @@
     <meta charset="UTF-8">
     <title>Mahjong UI</title>
     <style>
-        table {
+        #background {
             width: 100%;
+            top: 710px;
+            left: 0;
+            position: absolute;
+            display: block;
+        }
+        #bgtable {
+            width: 100%;
+            position: absolute;
         }
         td {
             border: 1px solid black;
@@ -13,57 +21,346 @@
         textarea {
             width: 98%;
         }
+        #game {
+            width: 100%;
+            position: absolute;
+            height: 700px;
+            padding: 0;
+            left: 0;
+            top: 0;
+            background-color: rgb(23, 94, 38);
+            display: block;
+        }
+        #p1, #p3 {
+            width: 600px;
+            height: 150px;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+        #p1 {top: 15px;}
+        #p3 {bottom: 15px}
+        #p2, #p4 {
+            width: 600px;
+            height: 150px;
+            top: 50%;
+            transform: translate(0, -50%) rotate(90deg);
+        }
+        #p2 {left: -200px;}
+        #p4 {right: -200px;}
+        .player {
+            background-color: rgb(50, 163, 73);
+            position: absolute;
+            padding: 0;
+            margin: 0;
+        }
+        .active {
+            border-style: solid;
+            border-width: 3px;
+            border-color: rgb(99, 211, 177);
+        }
+        .ptbl {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            top: 0;
+            left: 0;
+        }
+        table {
+            width: 100%;
+        }
+        .tiles {
+            height: 50px;
+            font-size: 26px;
+            text-align: center;
+        }
+        .selected {
+            background-color: rgb(179, 167, 62);
+        }
+        .pgh {
+            width: 30px;
+        }
+        .pnames {
+            width: 150px;
+            height: 30px;
+            background-color: rgb(50, 163, 73);
+            position: absolute;
+            padding: 0;
+            margin: 0;
+        }
+        #pname1, #pname3 {
+            left: 50%;
+            transform: translate(-300px, 0);
+        }
+        #pname1 {top: 170px;}
+        #pname3 {bottom: 170px;}
+        #pname2, #pname4 {
+            top: 50%;
+            transform: translate(0, -335px);
+        }
+        #pname2 {left: 25px;}
+        #pname4 {right: 25px;}
+        #pool {
+            width: 60%;
+            height: 160px;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            position: absolute;
+            background-color: rgb(60, 151, 101);
+        }
+        #bufferarea {
+            width: 50px;
+            height: 50px;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            position: absolute;
+            background-color: rgb(50, 163, 73);
+        }
     </style>
 </head>
 <body>
-    <p>test</p>
-    <table><tr>
-        <td><div id="p1">
-            <button id="p1login" onclick="login(1, event)">P1 LOGIN</button>
-            <button id="p1join" onclick="ws1.send('JUSTJOIN')">P1 JOIN</button>
+    <div id="game">
+        <div id="p1" class="player">
+            <table><tr>
+                <td class="pgh">PENG:</td><td class="tiles" id="p1peng"></td>
+                <td class="pgh">GANG:</td><td class="tiles" id="p1gang"></td>
+                <td class="pgh">HU:</td><td class="tiles" id="p1hu"></td>
+            </tr></table>
+            <table><tr class="tiles" id="p1tiles">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr></table>
+            <table><tr class="buttons">
+                <td id="p1score">Scores: 0</td>
+                <td id="p1que">Que Type: </td>
+                <td><button disabled id="pass1">PASS</button></td>
+                <td><button disabled id="peng1">PENG</button></td>
+                <td><button disabled id="gang1">GANG</button></td>
+                <td><button disabled id="hu1">HU</button></td>
+            </tr></table>
+        </div>
+
+        <div id="p2" class="player">
+            <table><tr class="buttons">
+                <td id="p2score">Scores: 0</td>
+                <td id="p2que">Que Type: </td>
+                <td><button disabled id="pass2">PASS</button></td>
+                <td><button disabled id="peng2">PENG</button></td>
+                <td><button disabled id="gang2">GANG</button></td>
+                <td><button disabled id="hu2">HU</button></td>
+            </tr></table>
+            <table><tr class="tiles" id="p2tiles">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr></table>
+            <table><tr>
+                <td class="pgh">PENG:</td><td class="tiles" id="p2peng"></td>
+                <td class="pgh">GANG:</td><td class="tiles" id="p2gang"></td>
+                <td class="pgh">HU:</td><td class="tiles" id="p2hu"></td>
+            </tr></table>
+        </div>
+
+        <div id="p3" class="player">
+            <table><tr class="buttons">
+                <td id="p3score">Scores: 0</td>
+                <td id="p3que">Que Type: </td>
+                <td><button disabled id="pass3">PASS</button></td>
+                <td><button disabled id="peng3">PENG</button></td>
+                <td><button disabled id="gang3">GANG</button></td>
+                <td><button disabled id="hu3">HU</button></td>
+            </tr></table>
+            <table><tr class="tiles" id="p3tiles">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr></table>
+            <table><tr>
+                <td class="pgh">PENG:</td><td class="tiles" id="p3peng"></td>
+                <td class="pgh">GANG:</td><td class="tiles" id="p3gang"></td>
+                <td class="pgh">HU:</td><td class="tiles" id="p3hu"></td>
+            </tr></table>
+        </div>
+
+        <div id="p4" class="player">
+	        <table><tr>
+                <td class="pgh">PENG:</td><td class="tiles" id="p4peng"></td>
+                <td class="pgh">GANG:</td><td class="tiles" id="p4gang"></td>
+                <td class="pgh">HU:</td><td class="tiles" id="p4hu"></td>
+            </tr></table>
+            <table><tr class="tiles" id="p1tiles">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr></table>
+            <table><tr class="buttons">
+                <td id="p4score">Scores: 0</td>
+                <td id="p4que">Que Type: </td>
+                <td><button disabled id="pass4">PASS</button></td>
+                <td><button disabled id="peng4">PENG</button></td>
+                <td><button disabled id="gang4">GANG</button></td>
+                <td><button disabled id="hu4">HU</button></td>
+            </tr></table>
+        </div>
+
+        <div class="pnames" id="pname1"><span></span></div>
+        <div class="pnames" id="pname2"><span></span></div>
+        <div class="pnames" id="pname3"><span></span></div>
+        <div class="pnames" id="pname4"><span></span></div>
+
+        <div id="pool">
+            <p><span>P1: </span><span id="p1given"></span></p>
+            <p><span>P2: </span><span id="p2given"></span></p>
+            <p><span>P3: </span><span id="p3given"></span></p>
+            <p><span>P4: </span><span id="p4given"></span></p>
+        </div>
+        <div id="bufferarea"><span id="buffer"></span></div>
+    </div>
+
+    <div id="background"><table id="bgtable"><tr>
+        <td><div>
+            <button id="p1login" onclick="login(p1)">P1 LOGIN</button>
+            <button id="p1join" onclick="p1.socket.send('JUSTJOIN')">P1 JOIN</button>
             <br>
-            <textarea rows="40" spellcheck="false"></textarea>
-        </td></div>
-        <td><div id="p2">
-            <button id="p2login" onclick="login(2, event)">P2 LOGIN</button>
-            <button id="p2join" onclick="ws2.send('JUSTJOIN')">P2 JOIN</button>
+            <textarea id="p1msg" rows="40" spellcheck="false"></textarea>
+        </div></td>
+        <td><div>
+            <button id="p2login" onclick="login(p2)">P2 LOGIN</button>
+            <button id="p2join" onclick="p2.socket.send('JUSTJOIN')">P2 JOIN</button>
             <br>
-            <textarea rows="40" spellcheck="false"></textarea>
-        </td></div>
-        <td><div id="p3">
-            <button id="p3login" onclick="login(3, event)">P3 LOGIN</button>
-            <button id="p3join" onclick="ws3.send('JUSTJOIN')">P3 JOIN</button>
+            <textarea id="p2msg" rows="40" spellcheck="false"></textarea>
+        </div></td>
+        <td><div>
+            <button id="p3login" onclick="login(p3)">P3 LOGIN</button>
+            <button id="p3join" onclick="p3.socket.send('JUSTJOIN')">P3 JOIN</button>
             <br>
-            <textarea rows="40" spellcheck="false"></textarea>
-        </td></div>
-        <td><div id="p4">
-            <button id="p4login" onclick="login(4, event)">P4 LOGIN</button>
-            <button id="p4join" onclick="ws4.send('JUSTJOIN')">P4 JOIN</button>
+            <textarea id="p3msg" rows="40" spellcheck="false"></textarea>
+        </div></td>
+        <td><div>
+            <button id="p4login" onclick="login(p4)">P4 LOGIN</button>
+            <button id="p4join" onclick="p4.socket.send('JUSTJOIN')">P4 JOIN</button>
             <br>
-            <textarea rows="40" spellcheck="false"></textarea>
-        </td></div>
-    </tr></table>
+            <textarea id="p4msg" rows="40" spellcheck="false"></textarea>
+        </div></td>
+    </tr></table></div>
 
 <script>
-    // console.log("nothing so far")
-    var ws1, ws2, ws3, ws4
-    function login(p, evt) {
-        var ws = new WebSocket("ws://127.0.0.1:8080");
-        ws.onmessage = function (e) {
-            evt.target.parentElement.lastElementChild.innerHTML = e.data + "\n- - - - - -\n" + evt.target.parentElement.lastElementChild.innerHTML
+    var p1 = {
+        index: 1,
+        name: "TP-1",
+        nameDisplay: document.getElementById("game").children[4].children[0],
+        socket: null,
+        score: 0,
+        tiles: "",
+        que: "UNDEF",
+        section: document.getElementById("p1"),
+        messages: document.getElementById("p1msg")
+    };
+    var p2 = {
+        index: 2,
+        name: "TP-2",
+        nameDisplay: document.getElementById("game").children[5].children[0],
+        socket: null,
+        score: 0,
+        tiles: "",
+        que: "UNDEF",
+        section: document.getElementById("p2"),
+        messages: document.getElementById("p2msg")
         };
-        if (p == 1){
-            ws1 = ws;
-            setTimeout(() => { ws1.send("PNAME!tt1"); }, 4000)
-        } else if (p == 2) {
-            ws2 = ws;
-            setTimeout(() => { ws2.send("PNAME!tt2"); }, 4000)
-        } else if (p == 3) {
-            ws3 = ws;
-            setTimeout(() => { ws3.send("PNAME!tt3"); }, 4000)
-        } else if (p == 4) {
-            ws4 = ws;
-            setTimeout(() => { ws4.send("PNAME!tt4"); }, 4000)
+    var p3 = {
+        index: 3,
+        name: "TP-3",
+        nameDisplay: document.getElementById("game").children[6].children[0],
+        socket: null,
+        score: 0,
+        tiles: "",
+        que: "UNDEF",
+        section: document.getElementById("p3"),
+        messages: document.getElementById("p3msg")
+        };
+    var p4 = {
+        index: 4,
+        name: "TP-4",
+        nameDisplay: document.getElementById("game").children[7].children[0],
+        socket: null,
+        score: 0,
+        tiles: "",
+        que: "UNDEF",
+        section: document.getElementById("p4"),
+        messages: document.getElementById("p4msg")
+        };
+    //var players = [p1,p2,p3,p4];
+    var namelist = new Object();
+    var tableNum = "";
+
+    function login(p) {
+        p.socket = new WebSocket("ws://127.0.0.1:8080");
+        setTimeout(() => { p.socket.send("PNAME!" + p.name); }, 4000);
+        p.socket.onmessage = function (e){
+            p.messages.innerHTML = e.data + "\n- - - - - - - -\n" +
+                                    p.messages.innerHTML;
+            processMsg(e.data, p)
+        }
+    }
+    function disableButtons() {
+        for (bs of document.querySelectorAll(".buttons")){
+            for (i = 2; i<6; i++){
+                bs.children[i].firstElementChild.disabled = true;
+            }
+        }
+    }
+    function processMsg(msg, p) {
+        let [header, content] = msg.split("!");
+        switch (header) {
+            case "UPDATE":
+                let [action, state] = content.split(";");
+                // interpretActiong(action.substring(4));
+                // not needed for debugging
+                updateState(state.substring(6));
+                break;
+            case "ACTIVE":
+
+                break;
+            case "PLAY":
+
+                break;
+            case "NEWNAME":
+                namelist[content] = p;
+                p.name = content;
+                p.nameDisplay.innerHTML = content.substring(8);
+                break;
+            case "GETTIN":
+                tableNum = content;
+                break;
+            case "PLAYERS":
+                // get player names, decide order of players
+                // not needed for debugging UI (always 1~4)
+                break;
+            case "ERR":
+
+                break;
+        }
+    }
+    function updateState(state){
+        let [pname, finished, pscore, peng, gang, hu, que, tiles] = 
+            state.split(",");
+        let player = namelist[pname];
+        player.score = pscore;
+        player.que = que;
+        document.getElementById("p" + player.index + "score").innerHTML = "Scores: " + pscore;
+        document.getElementById("p" + player.index + "que").innerHTML = "Que Type: " + que;
+        document.getElementById("p" + player.index + "peng").innerHTML = peng;
+        document.getElementById("p" + player.index + "gang").innerHTML = gang;
+        document.getElementById("p" + player.index + "hu").innerHTML = hu;
+
+        if (isNaN(tiles)) {
+            for (i = 0; i < 14; i++){
+                if (tiles.substr(i*2, 2)) {
+                    player.section.children[1].children[0].children[0].children[i].innerHTML = tiles.substr(i * 2, 2);
+                }else{
+                    player.section.children[1].children[0].children[0].children[i].innerHTML = "";
+                }
+            }
+        }else{
+            // fill with tile back, not needed in debugging
         }
     }
 </script>

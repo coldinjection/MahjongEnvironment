@@ -4,7 +4,7 @@ import WebSockets:Response, Request
 
 const SV_IP = "127.0.0.1"
 const SV_PORT = 8080
-const HTML_FILE = read(joinpath(@__DIR__, "web_mahjong.html"), String)
+const HTML_FILE = read(joinpath(@__DIR__, "ui_for_debug.html"), String)
 const MAX_GAMES = 20 # maximun number of games that can run at the same time
 const MAX_TBL = 40 # maximun number of tables (including those in game)
 

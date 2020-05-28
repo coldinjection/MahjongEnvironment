@@ -218,6 +218,10 @@ function play_a_round(g::Game)
         end
     end
 
+    for p in g.players
+        update_info(g, p, (0,"QUES",EMPTY_TILE,0))
+    end
+
     # nhand += 1 after a player takes a tile
     nhand::Int = 1
     # start playing and keep playing until
@@ -324,6 +328,7 @@ function play_a_round(g::Game)
                             @async begin
                                 resp_rob = ask_to_play(g.players[i].pname, ask_hu)
                                 if resp_rob == "HULE"
+                                    huPai(g.refp[i], gt)
                                     push!(hand_rec, (i, "HULE", gt, active_player))
                                     update_game_info(i)
                                 end
@@ -341,7 +346,7 @@ function play_a_round(g::Game)
                         continue
                     else
                         # the tile just taken by the active player is
-                        # be given out 
+                        # be given out
                         g.bufferedTile = gt
                         # the gang is invalid if someone else hu(ed) this tile
                         update_scores()
