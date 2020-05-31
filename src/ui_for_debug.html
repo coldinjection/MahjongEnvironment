@@ -73,8 +73,11 @@
             font-size: 26px;
             text-align: center;
         }
+        .tilecell {
+            width: 35px;
+        }
         .selected {
-            background-color: rgb(179, 167, 62);
+            border: 3px dashed rgb(224,240,117);
         }
         .pgh {
             width: 30px;
@@ -191,7 +194,7 @@
                 <td class="pgh">GANG:</td><td class="tiles" id="p4gang"></td>
                 <td class="pgh">HU:</td><td class="tiles" id="p4hu"></td>
             </tr></table>
-            <table><tr class="tiles" id="p1tiles">
+            <table><tr class="tiles" id="p4tiles">
                 <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                 <td></td><td></td><td></td><td></td><td></td><td></td><td style="background-color: rgb(127, 202, 84);"></td>
             </tr></table>
@@ -252,6 +255,7 @@
         name: "TP-1",
         nameDisplay: document.getElementById("game").children[4].children[0],
         socket: null,
+        askedToSend: false,
         score: 0,
         tiles: "",
         que: "UNDEF",
@@ -263,6 +267,7 @@
         name: "TP-2",
         nameDisplay: document.getElementById("game").children[5].children[0],
         socket: null,
+        askedToSend: false,
         score: 0,
         tiles: "",
         que: "UNDEF",
@@ -274,6 +279,7 @@
         name: "TP-3",
         nameDisplay: document.getElementById("game").children[6].children[0],
         socket: null,
+        askedToSend: false,
         score: 0,
         tiles: "",
         que: "UNDEF",
@@ -285,6 +291,7 @@
         name: "TP-4",
         nameDisplay: document.getElementById("game").children[7].children[0],
         socket: null,
+        askedToSend: false,
         score: 0,
         tiles: "",
         que: "UNDEF",
@@ -315,6 +322,7 @@
         let [header, content] = msg.split("!");
         switch (header) {
             case "UPDATE":
+                p.askedToSend = false;
                 let [action, state] = content.split(";");
                 interpretAction(action.substring(4));
                 updateState(state.substring(6));
@@ -326,6 +334,7 @@
                 document.getElementById("pname"+namelist[content].index).className += " active";
                 break;
             case "PLAY":
+                p.askedToSend = true;
                 let segments = content.substring(3).split(";");
                 let condition = segments[0];
                 let options = segments.slice(1);
@@ -335,6 +344,9 @@
                     p.section.children[1].children[0].children[0].children[13].innerHTML = condition;
                 }
 
+                break;
+            case "QUE":
+                p.askedToSend = true;
                 break;
             case "NEWNAME":
                 namelist[content] = p;
@@ -394,6 +406,48 @@
         }else{
             // fill with tile back, not needed in debugging
         }
+    }
+    for (i = 0; i < 13; i++){
+        let index = String(i+2);
+        document.getElementById("p1tiles").children[i].onclick = (event) => selectTile(p1, index, event);
+        document.getElementById("p1tiles").children[i].className = "tilecell";
+        document.getElementById("p2tiles").children[i].onclick = (event) => selectTile(p2, index, event);
+        document.getElementById("p2tiles").children[i].className = "tilecell";
+        document.getElementById("p3tiles").children[i].onclick = (event) => selectTile(p3, index, event);
+        document.getElementById("p3tiles").children[i].className = "tilecell";
+        document.getElementById("p4tiles").children[i].onclick = (event) => selectTile(p4, index, event);
+        document.getElementById("p4tiles").children[i].className = "tilecell";
+    }
+    document.getElementById("p1tiles").children[13].onclick = (event) => selectTile(p1, "1", event);
+    document.getElementById("p1tiles").children[13].className = "tilecell";
+    document.getElementById("p2tiles").children[13].onclick = (event) => selectTile(p2, "1", event);
+    document.getElementById("p2tiles").children[13].className = "tilecell";
+    document.getElementById("p3tiles").children[13].onclick = (event) => selectTile(p3, "1", event);
+    document.getElementById("p3tiles").children[13].className = "tilecell";
+    document.getElementById("p4tiles").children[13].onclick = (event) => selectTile(p4, "1", event);
+    document.getElementById("p4tiles").children[13].className = "tilecell";
+
+    function selectTile(player, ind, evt){
+        if (evt.target.className == "tilecell selected"){
+            // give out the tile
+            sendMsg(player, "GM!GIVE" + ind);
+            evt.target.className = "tilecell";
+        }else{
+            if(evt.target.innerHTML != ""){
+                // unselect the other
+                for (td of document.getElementsByClassName("selected")){
+                    td.className = "tilecell";
+                }
+                // select the tile
+                evt.target.className += " selected";
+            }
+        }
+    }
+    function sendMsg(player, msg){
+        if (player.askedToSend){
+            player.socket.send(msg);
+        }
+        player.askedToSend = false;
     }
 </script>
 </body>

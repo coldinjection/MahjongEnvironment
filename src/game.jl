@@ -284,8 +284,8 @@ function play_a_round(g::Game)
             t_ind > g.players[active_player].playableNum && (t_ind = 1)
             giveTile(g, g.refp[active_player], t_ind)
             push!(hand_rec, (active_player, "GIVE", g.bufferedTile, 0))
-            update_game_info(active_player)
             findTing(g, g.refp[active_player])
+            update_game_info(active_player)
         elseif resp_this[1:4] == "HULE"
             # hupai, 自摸
             huPai(g.refp[active_player], t)
@@ -338,10 +338,10 @@ function play_a_round(g::Game)
                     if hand_rec[end][1] == active_player
                         # the active player gangs if no one hu(ed) this tile
                         gangPai(g.refp[active_player], gt)
-                        update_game_info(active_player)
                         update_scores()
                         findTing(g, g.refp[active_player])
                         vcat(record, hand_rec)
+                        update_game_info(active_player)
                         # this player plays the next hand imediately
                         continue
                     else
@@ -358,11 +358,11 @@ function play_a_round(g::Game)
                     # gang a tile
                     gangPai(g.refp[active_player], gt)
                     push!(hand_rec, (active_player, "GANG", gt, 0))
-                    update_game_info(active_player)
                     # calculate the scores
                     update_scores()
                     findTing(g, g.refp[active_player])
                     vcat(record, hand_rec)
+                    update_game_info(active_player)
                     # this player plays the next hand imediately
                     continue
                 end
@@ -370,8 +370,8 @@ function play_a_round(g::Game)
                 # give out the tile just taken if the gang is failed
                 giveTile(g, g.refp[active_player], 1)
                 push!(hand_rec, (active_player, "GIVE", g.bufferedTile, 0))
-                update_game_info(active_player)
                 findTing(g, g.refp[active_player])
+                update_game_info(active_player)
             end
         end
 
@@ -418,15 +418,15 @@ function play_a_round(g::Game)
                         end
                         giveTile(g, g.refp[i], to_give)
                         push!(hand_rec, (i, "GIVE", g.bufferedTile, 0))
-                        update_game_info(i)
                         findTing(g, g.refp[i])
+                        update_game_info(i)
                         # the nextp player plays
                         active_player = next_player(i)
                     elseif resp_i == "GANG"
                         gangPai(g.refp[i], g.bufferedTile)
                         push!(hand_rec, (i, "GANG", g.bufferedTile, active_player))
-                        update_game_info(i)
                         findTing(g, g.refp[i])
+                        update_game_info(i)
                         active_player = i
                     elseif resp_i == "HULE"
                         # hu will not take effect if another player
