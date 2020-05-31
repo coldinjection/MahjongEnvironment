@@ -66,9 +66,9 @@ end
 # return a question that asks a player
 # to choose an option given the tile `t`
 function build_question(options::Vector{String}, t::Tile)
-    q = "PLAY!ON:" * EMOJIS[t] * ";"
+    q = "PLAY!ON:" * EMOJIS[t]
     for opt in options
-        q *= opt * ";"
+        q *= ";" * opt
     end
     return q
 end
