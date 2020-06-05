@@ -15,7 +15,7 @@ struct Tile
     Tile(t::UInt8, n::UInt8) = new(t, n)
 end
 function Tile(type::UInt8, num::Integer)
-    if t in (WAN, TIAO, TONG) && n > 9
+    if type in (WAN, TIAO, TONG) && num > 9
         error("num is too large")
     end
     try

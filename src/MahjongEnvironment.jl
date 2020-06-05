@@ -9,15 +9,16 @@ include("hall.jl") # The Hall of Games!
 include("interface.jl")
 
 if PROGRAM_FILE == @__FILE__
+    ip = "127.0.0.1"
+    port = 8080
     if !isempty(ARGS)
-        gameStyle = ARGS[1]
+        ip = split(ARGS[1], ":")[1]
         try
-            gameMode = ARGS[2:end]
+            port = parse(Int, split(ARGS[1], ":")[2])
         catch BoundsError
-            gameMode = defaultMode[gameStyle]
+            # port is still 8080
         end
     end
-    # initialize the game
-    initGame()
+    run_server(ip, port)
 end
 # end

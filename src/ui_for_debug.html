@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <title>Mahjong UI</title>
     <style>
+        button:enabled {
+            border: solid 2px rgb(195, 209, 102);
+            background-color: rgb(224,240,117);
+            color: rgb(0,0,0);
+            cursor: pointer;
+        }
+        button:disabled {
+            border: solid 2px rgb(203, 211, 155);
+            background-color: rgb(230, 238, 175);
+            color: rgb(167, 163, 152);
+            cursor: pointer;
+        }
         #background {
             width: 100%;
             top: 710px;
@@ -141,10 +153,10 @@
             <table><tr class="buttons">
                 <td id="p1score">Scores: 0</td>
                 <td id="p1que">Que Type: </td>
-                <td><button disabled id="pass1">PASS</button></td>
-                <td><button disabled id="peng1">PENG</button></td>
-                <td><button disabled id="gang1">GANG</button></td>
-                <td><button disabled id="hu1">HU</button></td>
+                <td><button disabled id="pass1" onclick="buttonResponse(p1, 'GM!PASS', event);">PASS</button></td>
+                <td><button disabled id="peng1" onclick="buttonResponse(p1, 'GM!PENG', event);">PENG</button></td>
+                <td><button disabled id="gang1" onclick="buttonResponse(p1, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="hu1" onclick="buttonResponse(p1, 'GM!HULE', event);">HU</button></td>
             </tr></table>
         </div>
 
@@ -152,10 +164,10 @@
             <table><tr class="buttons">
                 <td id="p2score">Scores: 0</td>
                 <td id="p2que">Que Type: </td>
-                <td><button disabled id="pass2">PASS</button></td>
-                <td><button disabled id="peng2">PENG</button></td>
-                <td><button disabled id="gang2">GANG</button></td>
-                <td><button disabled id="hu2">HU</button></td>
+                <td><button disabled id="pass2" onclick="buttonResponse(p2, 'GM!PASS', event);">PASS</button></td>
+                <td><button disabled id="peng2" onclick="buttonResponse(p2, 'GM!PENG', event);">PENG</button></td>
+                <td><button disabled id="gang2" onclick="buttonResponse(p2, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="hu2" onclick="buttonResponse(p2, 'GM!HULE', event);">HU</button></td>
             </tr></table>
             <table><tr class="tiles" id="p2tiles">
                 <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
@@ -172,10 +184,10 @@
             <table><tr class="buttons">
                 <td id="p3score">Scores: 0</td>
                 <td id="p3que">Que Type: </td>
-                <td><button disabled id="pass3">PASS</button></td>
-                <td><button disabled id="peng3">PENG</button></td>
-                <td><button disabled id="gang3">GANG</button></td>
-                <td><button disabled id="hu3">HU</button></td>
+                <td><button disabled id="pass3" onclick="buttonResponse(p3, 'GM!PASS', event);">PASS</button></td>
+                <td><button disabled id="peng3" onclick="buttonResponse(p3, 'GM!PENG', event);">PENG</button></td>
+                <td><button disabled id="gang3" onclick="buttonResponse(p3, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="hu3" onclick="buttonResponse(p3, 'GM!HULE', event);">HU</button></td>
             </tr></table>
             <table><tr class="tiles" id="p3tiles">
                 <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
@@ -201,17 +213,53 @@
             <table><tr class="buttons">
                 <td id="p4score">Scores: 0</td>
                 <td id="p4que">Que Type: </td>
-                <td><button disabled id="pass4">PASS</button></td>
-                <td><button disabled id="peng4">PENG</button></td>
-                <td><button disabled id="gang4">GANG</button></td>
-                <td><button disabled id="hu4">HU</button></td>
+                <td><button disabled id="pass4" onclick="buttonResponse(p4, 'GM!PASS', event);">PASS</button></td>
+                <td><button disabled id="peng4" onclick="buttonResponse(p4, 'GM!PENG', event);">PENG</button></td>
+                <td><button disabled id="gang4" onclick="buttonResponse(p4, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="hu4"  onclick="buttonResponse(p4, 'GM!HULE', event);">HU</button></td>
             </tr></table>
         </div>
 
-        <div class="pnames" id="pname1"><span></span></div>
-        <div class="pnames" id="pname2"><span></span></div>
-        <div class="pnames" id="pname3"><span></span></div>
-        <div class="pnames" id="pname4"><span></span></div>
+        <div class="pnames" id="pname1"><span></span>
+            <div id="queBt1" style="display:none">
+                <button disabled onclick="buttonResponse(p1, 'GM!WAN', event);
+                    document.getElementById('queBt1').style.display = 'none';">WAN</button>
+                <button disabled onclick="buttonResponse(p1, 'GM!TIAO', event);
+                    document.getElementById('queBt1').style.display = 'none';">TIAO</button>
+                <button disabled onclick="buttonResponse(p1, 'GM!TONG', event);
+                    document.getElementById('queBt1').style.display = 'none';">TONG</button>
+            </div>
+        </div>
+        <div class="pnames" id="pname2"><span></span>
+            <div id="queBt2" style="display:none">
+                <button disabled onclick="buttonResponse(p2, 'GM!WAN', event);
+                    document.getElementById('queBt2').style.display = 'none';">WAN</button>
+                <button disabled onclick="buttonResponse(p2, 'GM!TIAO', event);
+                    document.getElementById('queBt2').style.display = 'none';">TIAO</button>
+                <button disabled onclick="buttonResponse(p2, 'GM!TONG', event);
+                    document.getElementById('queBt2').style.display = 'none';">TONG</button>
+            </div>
+        </div>
+        <div class="pnames" id="pname3"><span></span>
+            <div id="queBt3" style="display:none">
+                <button disabled onclick="buttonResponse(p3, 'GM!WAN', event);
+                    document.getElementById('queBt3').style.display = 'none';">WAN</button>
+                <button disabled onclick="buttonResponse(p3, 'GM!TIAO', event);
+                    document.getElementById('queBt3').style.display = 'none';">TIAO</button>
+                <button disabled onclick="buttonResponse(p3, 'GM!TONG', event);
+                    document.getElementById('queBt3').style.display = 'none';">TONG</button>
+            </div>
+        </div>
+        <div class="pnames" id="pname4"><span></span>
+            <div id="queBt4" style="display:none">
+                <button disabled onclick="buttonResponse(p4, 'GM!WAN', event);
+                    document.getElementById('queBt4').style.display = 'none';">WAN</button>
+                <button disabled onclick="buttonResponse(p4, 'GM!TIAO', event);
+                    document.getElementById('queBt4').style.display = 'none';">TIAO</button>
+                <button disabled onclick="buttonResponse(p4, 'GM!TONG', event);
+                    document.getElementById('queBt4').style.display = 'none';">TONG</button>
+            </div>
+        </div>
 
         <div id="pool">
             <p><span>P1: </span><span id="p1given"></span></p>
@@ -321,6 +369,12 @@
     function processMsg(msg, p) {
         let [header, content] = msg.split("!");
         switch (header) {
+            case "ACT":
+                interpretAction(content);
+                break;
+            case "STATE":
+                updateState(content);
+                break;
             case "UPDATE":
                 p.askedToSend = false;
                 let [action, state] = content.split(";");
@@ -338,15 +392,35 @@
                 let segments = content.substring(3).split(";");
                 let condition = segments[0];
                 let options = segments.slice(1);
-                if(condition == "PENG"){
-
-                }else{
+                if(document.getElementById("pname"+p.index).className == "pnames active"){
                     p.section.children[1].children[0].children[0].children[13].innerHTML = condition;
-                }
+                }else if(condition == "PENG"){
 
+                }
+                for (opt of options){
+                    if (opt == "PASS"){
+                        document.getElementById("pass" + p.index).disabled = false;
+                        // setTimeout(() => { document.getElementById("pass" + p.index).disabled = true; }, 14800);
+                    }else if(opt == "PENG"){
+                        document.getElementById("peng" + p.index).disabled = false;
+                        // setTimeout(() => { document.getElementById("peng" + p.index).disabled = true; }, 14800);
+                    }else if(opt == "GANG"){
+                        document.getElementById("gang" + p.index).disabled = false;
+                        // setTimeout(() => { document.getElementById("gang" + p.index).disabled = true; }, 14800);
+                        
+                    } else if (opt == "HULE"){
+                        document.getElementById("hu" + p.index).disabled = false;
+                        // setTimeout(() => { document.getElementById("hu" + p.index).disabled = true; }, 14800);
+
+                    }
+                }
                 break;
             case "QUE":
                 p.askedToSend = true;
+                document.getElementById("queBt" + p.index).style.display = "inline";
+                for (bt of document.getElementById("queBt"+p.index).children){
+                    bt.disabled = false;
+                }
                 break;
             case "NEWNAME":
                 namelist[content] = p;
@@ -380,7 +454,15 @@
                 document.getElementById("buffer").innerHTML = tile;
                 document.getElementById("p"+source+"given").innerText += tile; 
                 break;
+            case "PENG":
 
+                break;
+            case "GANG":
+
+                break;
+            case "HULE":
+
+                break;
         }
     }
     function updateState(state){
@@ -448,6 +530,16 @@
             player.socket.send(msg);
         }
         player.askedToSend = false;
+    }
+    function buttonResponse(player, msg, evt){
+        sendMsg(player, msg);
+        document.getElementById("pass"+player.index).disabled = true;
+        document.getElementById("gang" + player.index).disabled = true;
+        document.getElementById("peng" + player.index).disabled = true;
+        document.getElementById("hu" + player.index).disabled = true;
+        for(bt of document.getElementById("queBt"+player.index).children){
+            bt.disabled = true;
+        }
     }
 </script>
 </body>

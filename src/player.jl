@@ -20,17 +20,13 @@ mutable struct Player
     # the buffer tile is always at playerTiles[1]
     # tiles become unplayable when they are peng(ed) or gang(ed)
     Player(pname::String) =
-        new(pname, TileList([]), EMPTY_TINGPAI,
+        new(pname, TileList([]), Dict{Tile, String}(),
             TileList([]), TileList([]), TileList([]),
             TileList([]), TileList([]), TileList([]),
             0, 0x00, 0, false)
 end
 
-@inline refPlayer(player) = Ref{Player}(player)
-@inline decideQue(p::Ref{Player}, t::UInt8) = (p[].que = t)
-
-# default set of tiles a player can hu (empty)
-const EMPTY_TINGPAI = Dict{Tile, String}()
+@inline decideQue(p::Player, t::UInt8) = (p.queType = t)
 
 function stringify(p::Player)
     str::Vector{String} = ["","","","","","","",""]
@@ -53,49 +49,49 @@ function stringify(p::Player)
     return str
 end
 
-function sortTiles(p::Ref{Player})
+function sortTiles(p::Player)
     # sort the playable tiles
     # empty buffer tile is 0x00 so it will always at index 1
-    p[].playerTiles[1:p[].playableNum] =
-        sort(p[].playerTiles[1:p[].playableNum])
+    p.playerTiles[1:p.playableNum] =
+        sort(p.playerTiles[1:p.playableNum])
 end
 
 # find tiles that form pairs, triples and quadruples
-function findGroups(p::Ref{Player})
+function findGroups(p::Player)
     sortTiles(p)
-    p[].pairs      = TileList([])
-    p[].triples    = TileList([])
-    p[].quadruples = TileList([])
+    p.pairs      = TileList([])
+    p.triples    = TileList([])
+    p.quadruples = TileList([])
     i::Int = 1
-    while i < p[].playableNum
-        t::Tile = p[].playerTiles[i]
+    while i < p.playableNum
+        t::Tile = p.playerTiles[i]
         # continue to the next loop immediately if t is of que type
-        getType(t) == p[].queType && (i += 1; continue)
-        isPair::Bool = t == p[].playerTiles[i+1]
+        getType(t) == p.queType && (i += 1; continue)
+        isPair::Bool = t == p.playerTiles[i+1]
         # continue to the next loop immediately if isPair is false
         isPair || (i += 1; continue)
         isTriple::Bool = false
         try
             # isPair must be true if this line is executed
-            isTriple = t == p[].playerTiles[i+2]
+            isTriple = t == p.playerTiles[i+2]
         catch BoundsError
             # isTriple remains false
         end
         isQuadruple::Bool = false
         try
-            isQuadruple = isTriple && t == p[].playerTiles[i+3]
+            isQuadruple = isTriple && t == p.playerTiles[i+3]
         catch BoundsError
             # isQuadruple remains false
         end
 
         if isQuadruple
-            push!(p[].quadruples, t)
+            push!(p.quadruples, t)
             i += 4
         elseif isTriple
-            push!(p[].triples, t)
+            push!(p.triples, t)
             i += 3
         elseif isPair
-            push!(p[].pairs, t)
+            push!(p.pairs, t)
             i += 2
         else
             i += 1
@@ -171,73 +167,77 @@ end
 # peng a tile given by another player
 # the player will have to give out a tile after peng
 # so always call giveTile(p, ti) immediately after pengPai(p)
-function pengPai(p::Ref{Player}, tile::Tile)
-    push!(p[].peng, tile)
+function pengPai(p::Player, tile::Tile)
+    push!(p.peng, tile)
     # remove the buffer because a tile will be given out immediately
     # leaving an EMPTY_TILE at its original position
-    deleteat!(p[].playerTiles, 1)
+    deleteat!(p.playerTiles, 1)
     # remove the other 2 peng tiles
-    for i = 1:p[].playableNum
-        if p[].playerTiles[i] == tile
-            deleteat!(p[].playerTiles[i+1])
-            deleteat!(p[].playerTiles[i])
+    for i = 1:p.playableNum
+        if p.playerTiles[i] == tile
+            # deleteat!(p.playerTiles,i+1)
+            # deleteat!(p.playerTiles,i)
+            deleteat!(p.playerTiles,(i, i+1))
             break
         end
     end
     # decrease playableNum by 3 (2 removed tiles, 1 removed buffer)
-    p[].playableNum -= 3
+    p.playableNum -= 3
     return
 end
 
 # the player plays the next hand (take and give a tile) after gang
 # gang an existing quadruple in playerTiles
-function gangPai(p::Ref{Player}, gt::Tile)
-    push!(p[].gang, gt)
-    if gt in p[].peng
+function gangPai(p::Player, gt::Tile)
+    push!(p.gang, gt)
+    if gt in p.peng
         # 补杠, the tile must be at playerTiles[1]
-        p[].playerTiles[1] = EMPTY_TILE
+        p.playerTiles[1] = EMPTY_TILE
         # remove gt from peng
-        for i = 1:length(p[].peng)
-            if p[].peng[i] == gt
-                deleteat!(p[].peng, i)
+        for i = 1:length(p.peng)
+            if p.peng[i] == gt
+                deleteat!(p.peng, i)
                 break
             end
         end
-    elseif gt == p[].playerTiles[1]
+    elseif gt == p.playerTiles[1]
         # when the gang tile is the one just taken
-        p[].playerTiles[1] = EMPTY_TILE
-        for i = 1:p[].playableNum
+        p.playerTiles[1] = EMPTY_TILE
+        for i = 1:p.playableNum
             # remove the other 3
-            if p[].playerTiles[i] == gt
-                deleteat!(p[].playerTiles[i+2])
-                deleteat!(p[].playerTiles[i+1])
-                deleteat!(p[].playerTiles[i])
+            if p.playerTiles[i] == gt
+                # deleteat!(p.playerTiles,i+2)
+                # deleteat!(p.playerTiles,i+1)
+                # deleteat!(p.playerTiles,i)
+                deleteat!(p.playerTiles,i:(i+2))
                 break
             end
         end
-        p[].playableNum -= 3
+        p.playableNum -= 3
     else
         # when the gang tile is in existing quadruples
         # remove the 4 gang tiles
-        for i = 1:p[].playableNum
-            if p[].playerTiles[i] == gt
-                deleteat!(p[].playerTiles[i+3])
-                deleteat!(p[].playerTiles[i+2])
-                deleteat!(p[].playerTiles[i+1])
-                deleteat!(p[].playerTiles[i])
+        for i = 1:p.playableNum
+            if p.playerTiles[i] == gt
+                # deleteat!(p.playerTiles[i+3])
+                # deleteat!(p.playerTiles[i+2])
+                # deleteat!(p.playerTiles[i+1])
+                # deleteat!(p.playerTiles[i])
+                deleteat!(p.playerTiles,i:(i+3))
                 break
             end
         end
         sortTiles(p)
         # add a new buffer, playableNum += 1
-        insert!(p[].playerTiles, 1, EMPTY_TILE)
-        # p[].playableNum += 3 (4 removed, 1 new buffer)
-        p[].playableNum -= 3
+        insert!(p.playerTiles, 1, EMPTY_TILE)
+        # p.playableNum -= 3 (4 removed, 1 new buffer)
+        p.playableNum -= 3
     end
 end
 
 # hu pai and stop playing
-function huPai(p::Ref{Player}, tile::Tile)
-    p[].isFinished = true
-    push!(p[].hu, tile)
+function huPai(p::Player, tile::Tile)
+    p.isFinished = true
+    p.playableNum = 1
+    push!(p.hu, tile)
 end

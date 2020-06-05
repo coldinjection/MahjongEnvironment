@@ -126,7 +126,7 @@ function coroutine(ws)
         data, success = readguarded(ws)
         success || (println("$pname disconnected"); break)
         string_data = String(data)
-        println(pname, " sent: ", string_data)
+        # println(pname, " sent: ", string_data)
         header, msg = chop(string_data)
         if pname == ""
             if header == "PNAME" && !isempty(msg)
@@ -150,6 +150,7 @@ function coroutine(ws)
                 isready(pname_msg[pname]) && take!(pname_msg[pname])
                 # put the msg in a channel for the game interface to take
                 put!(pname_msg[pname], msg)
+                wanted_to_send[pname] = false
             end
         elseif header == "JUSTJOIN"
             # put client in match making queue
