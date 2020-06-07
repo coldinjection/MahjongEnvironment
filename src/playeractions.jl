@@ -73,6 +73,7 @@ function findTing(game::Game, p::Player)
         # restore playerTiles
         p.playerTiles = copy(original)
     end
+    findGroups(p)
     return
 end
 

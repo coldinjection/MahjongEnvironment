@@ -54,6 +54,10 @@ function sortTiles(p::Player)
     # empty buffer tile is 0x00 so it will always at index 1
     p.playerTiles[1:p.playableNum] =
         sort(p.playerTiles[1:p.playableNum])
+    if p.playerTiles[2] == EMPTY_TILE
+        deleteat!(p.playerTiles, 2)
+        p.playableNum -= 1
+    end
 end
 
 # find tiles that form pairs, triples and quadruples
@@ -169,20 +173,15 @@ end
 # so always call giveTile(p, ti) immediately after pengPai(p)
 function pengPai(p::Player, tile::Tile)
     push!(p.peng, tile)
-    # remove the buffer because a tile will be given out immediately
-    # leaving an EMPTY_TILE at its original position
-    deleteat!(p.playerTiles, 1)
     # remove the other 2 peng tiles
     for i = 1:p.playableNum
         if p.playerTiles[i] == tile
-            # deleteat!(p.playerTiles,i+1)
-            # deleteat!(p.playerTiles,i)
             deleteat!(p.playerTiles,(i, i+1))
             break
         end
     end
-    # decrease playableNum by 3 (2 removed tiles, 1 removed buffer)
-    p.playableNum -= 3
+    # decrease playableNum by 2
+    p.playableNum -= 2
     return
 end
 
@@ -206,9 +205,6 @@ function gangPai(p::Player, gt::Tile)
         for i = 1:p.playableNum
             # remove the other 3
             if p.playerTiles[i] == gt
-                # deleteat!(p.playerTiles,i+2)
-                # deleteat!(p.playerTiles,i+1)
-                # deleteat!(p.playerTiles,i)
                 deleteat!(p.playerTiles,i:(i+2))
                 break
             end
@@ -216,21 +212,16 @@ function gangPai(p::Player, gt::Tile)
         p.playableNum -= 3
     else
         # when the gang tile is in existing quadruples
-        # remove the 4 gang tiles
+        # make the 1st one EMPTY_TILE (new buffer), remove the other 3
         for i = 1:p.playableNum
             if p.playerTiles[i] == gt
-                # deleteat!(p.playerTiles[i+3])
-                # deleteat!(p.playerTiles[i+2])
-                # deleteat!(p.playerTiles[i+1])
-                # deleteat!(p.playerTiles[i])
-                deleteat!(p.playerTiles,i:(i+3))
+                p.playerTiles[i] = EMPTY_TILE
+                deleteat!(p.playerTiles,(i+1):(i+3))
                 break
             end
         end
         sortTiles(p)
-        # add a new buffer, playableNum += 1
-        insert!(p.playerTiles, 1, EMPTY_TILE)
-        # p.playableNum -= 3 (4 removed, 1 new buffer)
+        # 3 removed
         p.playableNum -= 3
     end
 end

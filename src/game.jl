@@ -113,7 +113,7 @@ function player_gives(game::Game, tile_ind::String = "1")
     end
     tind > game.players[game.giving_player].playableNum && (tind = 1)
 
-    println(string(game.acting_player)*" GIVE "*string(tind))
+    # println(string(game.acting_player)*" GIVE "*string(tind))
 
     giveTile(game, game.players[game.giving_player], tind)
     push!(game.hand_rec, (game.giving_player, "GIVE", game.bufferedTile, 0))
@@ -126,7 +126,7 @@ end
 
 function player_pengs(game::Game)
 
-    println(string(game.acting_player)*" PENG")
+    # println(string(game.acting_player)*" PENG")
 
     pengPai(game.players[game.acting_player], game.bufferedTile)
     push!(game.hand_rec,
@@ -158,17 +158,17 @@ function player_gangs(game::Game, tile::String)
         end
     end
 
-    println(string(game.acting_player)*" GANG "*tile)
+    # println(string(game.acting_player)*" GANG "*tile)
 
     if game.giving_player == 0 && !(gt in game.players[game.acting_player].peng)
-        # 暗杠
+        # 暗杠 concealed gang
         gangPai(game.players[game.acting_player], gt)
         push!(game.hand_rec, (game.acting_player, "GANG", gt, 0))
         reportAction(game)
         findTing(game, game.players[game.acting_player])
         updateStates(game)
     else
-        # 明杠
+        # 明杠 open gang
         push!(game.hand_rec, (game.acting_player, "GANG", gt, game.giving_player))
         reportAction(game)
         # check robbing
@@ -210,7 +210,7 @@ function player_hus(game::Game)
     end
     game.players[game.acting_player].isFinished || (game.nStillPlaying -= 1)
 
-    println(string(game.acting_player)*" HU")
+    # println(string(game.acting_player)*" HU")
 
     huPai(game.players[game.acting_player], ht)
     push!(game.hand_rec, (game.acting_player, "HULE", ht, game.giving_player))
@@ -291,7 +291,7 @@ function play_a_round(g::Game)
     while g.stackTop > 0 && !(g.mode["finish&leave"] && g.nStillPlaying < 2)
         if g.players[g.acting_player].isFinished && g.mode["finish&leave"]
             # skip if the player has finished and the mode is "finish&leave"
-            hand_player = next_player(g.acting_player)
+            g.acting_player = next_player(g.acting_player)
             continue
         end
         # clear hand record
@@ -330,12 +330,9 @@ function play_a_round(g::Game)
             player_gives(g, resp_this[5:end])
         elseif resp_this == "HULE"
             player_hus(g)
-            hand_player = next_player(hand_player)
         elseif resp_this[1:4] == "GANG"
             player_gangs(g, resp_this[5:end])
         end
-        # append hand_rec to record
-        vcat(g.record, g.hand_rec)
         # calculate the scores
         calcScores(g)
         updateStates(g, (0,"SCORES",EMPTY_TILE,0))
@@ -353,9 +350,11 @@ function play_a_round(g::Game)
                 end
                 next = next_player(next)
             end
-        else
+        elseif g.hand_rec[end][2] != "GANG"
             g.acting_player = next_player(g.acting_player)
         end
+        # append hand_rec to record
+        g.record = vcat(g.record, g.hand_rec)
     end
     # round finished
     # 查大叫，查花猪

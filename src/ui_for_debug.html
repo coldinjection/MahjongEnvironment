@@ -65,11 +65,6 @@
             padding: 0;
             margin: 0;
         }
-        .active {
-            border-style: solid;
-            border-width: 3px;
-            border-color: rgb(99, 211, 177);
-        }
         .ptbl {
             width: 100%;
             height: 100%;
@@ -102,9 +97,14 @@
             padding: 0;
             margin: 0;
         }
-        .active{
+        .active {
             border-style: solid;
+            border-width: 3px;
             border-color: rgb(246, 187, 75);
+        }
+        .finished {
+            background-color: rgb(60, 151, 101);
+            color: rgb(37, 92, 60);
         }
         #pname1, #pname3 {
             left: 50%;
@@ -155,7 +155,7 @@
                 <td id="p1que">Que Type: </td>
                 <td><button disabled id="pass1" onclick="buttonResponse(p1, 'GM!PASS', event);">PASS</button></td>
                 <td><button disabled id="peng1" onclick="buttonResponse(p1, 'GM!PENG', event);">PENG</button></td>
-                <td><button disabled id="gang1" onclick="buttonResponse(p1, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="gang1" onclick="buttonResponse(p1, answerGang(p1), event);">GANG</button></td>
                 <td><button disabled id="hu1" onclick="buttonResponse(p1, 'GM!HULE', event);">HU</button></td>
             </tr></table>
         </div>
@@ -166,7 +166,7 @@
                 <td id="p2que">Que Type: </td>
                 <td><button disabled id="pass2" onclick="buttonResponse(p2, 'GM!PASS', event);">PASS</button></td>
                 <td><button disabled id="peng2" onclick="buttonResponse(p2, 'GM!PENG', event);">PENG</button></td>
-                <td><button disabled id="gang2" onclick="buttonResponse(p2, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="gang2" onclick="buttonResponse(p2, answerGang(p2), event);">GANG</button></td>
                 <td><button disabled id="hu2" onclick="buttonResponse(p2, 'GM!HULE', event);">HU</button></td>
             </tr></table>
             <table><tr class="tiles" id="p2tiles">
@@ -186,7 +186,7 @@
                 <td id="p3que">Que Type: </td>
                 <td><button disabled id="pass3" onclick="buttonResponse(p3, 'GM!PASS', event);">PASS</button></td>
                 <td><button disabled id="peng3" onclick="buttonResponse(p3, 'GM!PENG', event);">PENG</button></td>
-                <td><button disabled id="gang3" onclick="buttonResponse(p3, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="gang3" onclick="buttonResponse(p3, answerGang(p3), event);">GANG</button></td>
                 <td><button disabled id="hu3" onclick="buttonResponse(p3, 'GM!HULE', event);">HU</button></td>
             </tr></table>
             <table><tr class="tiles" id="p3tiles">
@@ -215,7 +215,7 @@
                 <td id="p4que">Que Type: </td>
                 <td><button disabled id="pass4" onclick="buttonResponse(p4, 'GM!PASS', event);">PASS</button></td>
                 <td><button disabled id="peng4" onclick="buttonResponse(p4, 'GM!PENG', event);">PENG</button></td>
-                <td><button disabled id="gang4" onclick="buttonResponse(p4, 'GM!GANG', event);">GANG</button></td>
+                <td><button disabled id="gang4" onclick="buttonResponse(p4, answerGang(p4), event);">GANG</button></td>
                 <td><button disabled id="hu4"  onclick="buttonResponse(p4, 'GM!HULE', event);">HU</button></td>
             </tr></table>
         </div>
@@ -301,7 +301,7 @@
     var p1 = {
         index: 1,
         name: "TP-1",
-        nameDisplay: document.getElementById("game").children[4].children[0],
+        nameDisplay: document.getElementById("pname1").children[0],
         socket: null,
         askedToSend: false,
         score: 0,
@@ -313,7 +313,7 @@
     var p2 = {
         index: 2,
         name: "TP-2",
-        nameDisplay: document.getElementById("game").children[5].children[0],
+        nameDisplay: document.getElementById("pname2").children[0],
         socket: null,
         askedToSend: false,
         score: 0,
@@ -325,7 +325,7 @@
     var p3 = {
         index: 3,
         name: "TP-3",
-        nameDisplay: document.getElementById("game").children[6].children[0],
+        nameDisplay: document.getElementById("pname3").children[0],
         socket: null,
         askedToSend: false,
         score: 0,
@@ -337,7 +337,7 @@
     var p4 = {
         index: 4,
         name: "TP-4",
-        nameDisplay: document.getElementById("game").children[7].children[0],
+        nameDisplay: document.getElementById("pname4").children[0],
         socket: null,
         askedToSend: false,
         score: 0,
@@ -346,7 +346,6 @@
         section: document.getElementById("p4"),
         messages: document.getElementById("p4msg")
         };
-    //var players = [p1,p2,p3,p4];
     var namelist = new Object();
     var tableNum = "";
 
@@ -359,13 +358,7 @@
             processMsg(e.data, p)
         }
     }
-    function disableButtons() {
-        for (bs of document.querySelectorAll(".buttons")){
-            for (i = 2; i<6; i++){
-                bs.children[i].firstElementChild.disabled = true;
-            }
-        }
-    }
+
     function processMsg(msg, p) {
         let [header, content] = msg.split("!");
         switch (header) {
@@ -406,12 +399,11 @@
                         // setTimeout(() => { document.getElementById("peng" + p.index).disabled = true; }, 14800);
                     }else if(opt == "GANG"){
                         document.getElementById("gang" + p.index).disabled = false;
+
                         // setTimeout(() => { document.getElementById("gang" + p.index).disabled = true; }, 14800);
-                        
                     } else if (opt == "HULE"){
                         document.getElementById("hu" + p.index).disabled = false;
                         // setTimeout(() => { document.getElementById("hu" + p.index).disabled = true; }, 14800);
-
                     }
                 }
                 break;
@@ -439,6 +431,56 @@
                 break;
         }
     }
+
+    function answerGang(player){
+        let possibleGT = [];
+        let pt = document.getElementById("p" + player.index + "peng").innerHTML;
+        let tInQuestion = "";
+        if (document.getElementById("pname" + player.index).className == "pnames active"){
+            tInQuestion = document.getElementById("p" + player.index + "tiles").children[13].innerHTML;
+            if (pt.includes(tInQuestion)){
+                possibleGT.push(tInQuestion);
+            }
+        }else{
+            tInQuestion = document.getElementById("buffer").innerHTML;
+        }
+        let i = 0;
+        let t = player.tiles.substr(i, 2);
+        while(t){
+            if(t == player.tiles.substr(i + 6, 2)){
+                // add quadraples to possibleGT
+                possibleGT.push(t);
+                i += 8;
+                t = player.tiles.substr(i, 2);
+            }else if (t == player.tiles.substr(i + 4, 2)){
+                // add tInQuestion to possibleGT if in triple
+                if(t == tInQuestion){
+                    possibleGT.push(t);
+                }
+                i += 6;
+                t = player.tiles.substr(i, 2);
+            }else{
+                i += 2;
+                t = player.tiles.substr(i, 2);
+            }
+        }
+        if(possibleGT.length == 1){
+            return "GM!GANG"+possibleGT[0];
+        }else if (possibleGT.length == 0){
+            console.error("No possible GANG tile found!");
+        }else{
+            let gt = "gt";
+            let q = "Choose ONE of these to gang:\n";
+            for (pgt of possibleGT){
+                q += pgt + "  "
+            }
+            while (!(possibleGT.includes(gt))){
+                gt = prompt(q);
+            }
+            return "GM!GANG" + gt;
+        }
+    }
+
     var msgCounter = 0
     function interpretAction(action){
         if (msgCounter < 3){
@@ -452,7 +494,7 @@
         switch (act){
             case "GIVE":
                 document.getElementById("buffer").innerHTML = tile;
-                document.getElementById("p"+source+"given").innerText += tile; 
+                document.getElementById("p"+source+"given").innerText += tile;
                 break;
             case "PENG":
 
@@ -466,7 +508,7 @@
         }
     }
     function updateState(state){
-        let [pname, finished, pscore, peng, gang, hu, que, tiles] = 
+        let [pname, finished, pscore, peng, gang, hu, que, tiles] =
             state.split(",");
         let player = namelist[pname];
         player.score = pscore;
@@ -478,6 +520,7 @@
         document.getElementById("p" + player.index + "hu").innerHTML = hu;
 
         if (isNaN(tiles)) {
+            player.tiles = tiles;
             for (i = 0; i < 14; i++){
                 if (tiles.substr(i*2, 2)) {
                     player.section.children[1].children[0].children[0].children[i].innerHTML = tiles.substr(i * 2, 2);
@@ -488,7 +531,11 @@
         }else{
             // fill with tile back, not needed in debugging
         }
+        if (finished == "FIN"){
+            document.getElementById("pname"+player.index).className = "pnames finished";
+        }
     }
+
     for (i = 0; i < 13; i++){
         let index = String(i+2);
         document.getElementById("p1tiles").children[i].onclick = (event) => selectTile(p1, index, event);
