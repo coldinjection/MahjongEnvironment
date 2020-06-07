@@ -1,14 +1,14 @@
-# "matched_hupai_rule" => scores_awarded
-# const EMPTY_RULES = Dict("rule" => 0)
 const DEFAULT_STYLE = "Chengdu"
 # "finish&leave" => false means 血流成河, "finish&leave" => true means 血战到底;
 # "exchange3" => true means 换三张
 const DEFAULT_MODE = Dict("finish&leave" => false, "exchange3" => false)
 # alias for game records
 Records = Vector{Tuple{Int, String, Tile, Int}}
+# alias for score transactions
+Transactions = Vector{Tuple{Int, String, Int, Vector{Int}}}
 
 mutable struct Game
-    # table::String
+    table::String
     style::String
     mode::Dict{String, Bool}
     hupaiRules::Dict{String, Int}
@@ -18,14 +18,16 @@ mutable struct Game
     stackTop::Int
     record::Records
     hand_rec::Records
+    scoreTrans::Transactions
     acting_player::Int
     giving_player::Int
     nStillPlaying::Int
     guoshui::Dict{Int, Bool}
-    function Game(pnames::Vector{String}, style::String = DEFAULT_STYLE, mode::Dict{String, Bool} = DEFAULT_MODE)
+    function Game(tbl::String, pnames::Vector{String}, style::String = DEFAULT_STYLE, mode::Dict{String, Bool} = DEFAULT_MODE)
         length(pnames) != 4 && error("wrong number of players")
         players::Vector{Player} = [Player(pnames[i]) for i = 1:4]
-        new(style, mode, Dict{String, Int}(), players, TileList([]), EMPTY_TILE, 0, Records([]), Records([]), 0, 0, 0, Dict{Int, Bool}())
+        new(tbl, style, mode, Dict{String, Int}(), players, TileList([]), EMPTY_TILE,
+            0, Records([]), Records([]), Transactions([]), 0, 0, 0, Dict{Int, Bool}())
     end
 end
 
@@ -64,6 +66,10 @@ function initGame(game::Game)
             "triples" => 2,
             # 清对
             "puretriples" => 8,
+            # 金钩钓
+            "goldhook" => 4,
+            # 清金钩钓
+            "puregoldhook" => 16,
             # 将对
             "triples258" => 8,
             # 七对
@@ -81,6 +87,9 @@ function initGame(game::Game)
         )
     end
     game.nStillPlaying::Int = 4
+    game.record = []
+    game.hand_rec = []
+    game.scoreTrans = []
     game.guoshui = Dict(1 => false, 2 => false,
                         3 => false, 4 => false)
     game.tileStack = shuffle(createTiles(suit))
@@ -163,7 +172,7 @@ function player_gangs(game::Game, tile::String)
     if game.giving_player == 0 && !(gt in game.players[game.acting_player].peng)
         # 暗杠 concealed gang
         gangPai(game.players[game.acting_player], gt)
-        push!(game.hand_rec, (game.acting_player, "GANG", gt, 0))
+        push!(game.hand_rec, (game.acting_player, "GANG", gt, -1))
         reportAction(game)
         findTing(game, game.players[game.acting_player])
         updateStates(game)
@@ -263,7 +272,73 @@ function react_after_giving(game::Game)
 end
 
 function calcScores(game::Game)
-
+    losers::Vector{Int} = []
+    scores::Int = 0
+    hasGang::Bool = false
+    # each transaction is in the form: (winner, reason, score, losers)
+    transactions::Transactions = []
+    for rec in game.hand_rec
+        rec[2] == "HULE" || rec[2] == "GANG" || continue
+        # find out the loser(s)
+        losers = []
+        if rec[4] < 1
+            for i = 1:4
+                i == rec[1] && continue
+                game.mode["finish&leave"] && game.players[i].isFinished && continue
+                push!(losers, i)
+            end
+        else
+            losers = [rec[4]]
+        end
+        # calculate the score
+        score = 0
+        if (rec[2] == "HULE")
+            println("$(rec[2]) hus by $(game.players[rec[1]].tingPai[rec[3]])")
+            # 基础分 base score
+            score = game.hupaiRules[game.players[rec[1]].tingPai[rec[3]]]
+            # 自摸 self-draw
+            rec[4] == 0 && (score *= 2)
+            # 带根 doubling by gangs
+            score *= 2^length(game.players[rec[1]].gang)
+            # 杠上花
+            if game.record[end][1] == rec[1] && game.record[end][2] == "GANG"
+                score *= 2
+            end
+            # 抢杠
+            hasGang && (score *= 2)
+        elseif (rec[2] == "GANG")
+            hasGang = true
+            if rec == game.hand_rec[end]
+                # not robbed, the gane action is already done
+                score = 2^(length(game.players[rec[1]].gang)-1)
+            else
+                # gang is robbed, the action is not actually done
+                score = 2^length(game.players[rec[1]].gang)
+            end
+            # doule if concealed gang
+            rec[4] == -1 && (score *= 2)
+        end
+        score > 128 && (score = 128)
+        # changes players' scores
+        push!(transactions, (rec[1], rec[2], score, losers))
+        for lo in losers
+            game.players[lo].score -= score
+            game.players[rec[1]].score += score
+        end
+        if rec[2] == "HULE" && hasGang
+            # 抢杠分转移 robbed gang scores
+            # this is an optional rule, comment this section to disable
+            for i = 1:length(transactions)
+                if transactions[i][2] == "GANG"
+                    game.players[transactions[i][1]].score -= transactions[i][3]
+                    game.players[rec[1]].score += transactions[i][3]
+                    deleteat!(transactions, i)
+                    break
+                end
+            end
+        end
+        game.scoreTrans = vcat(game.scoreTrans, transactions)
+    end
 end
 
 function play_a_round(g::Game)
@@ -288,7 +363,7 @@ function play_a_round(g::Game)
 
     # start playing and keep playing until
     # there is no more tile in the stack
-    while g.stackTop > 0 && !(g.mode["finish&leave"] && g.nStillPlaying < 2)
+    while g.stackTop > 0 && g.nStillPlaying > 1 && !(g.mode["finish&leave"] && g.nStillPlaying < 2)
         if g.players[g.acting_player].isFinished && g.mode["finish&leave"]
             # skip if the player has finished and the mode is "finish&leave"
             g.acting_player = next_player(g.acting_player)
@@ -357,16 +432,73 @@ function play_a_round(g::Game)
         g.record = vcat(g.record, g.hand_rec)
     end
     # round finished
-    # 查大叫，查花猪
-
+    # 查大叫, 退税, 查花猪
+    waiting::Vector{Int} = []
+    noWaiting::Vector{Int} = []
+    for i = 1:4
+        if !g.players[i].isFinished
+            if isempty(g.players[i].tingPai)
+                push!(noWaiting, i)
+            else
+                push!(wating, i)
+            end
+        end
+    end
+    if !isempty(noWaiting)
+        # check the largest ting
+        for w in waiting
+            largest::Int = 0
+            for score in values(g.players[w].tingPai)
+                score > largest && (largest = score)
+            end
+            for nw in noWaiting
+                g.players[nw].score -= score
+                g.players[w].score += score
+            end
+        end
+        # return gang scores
+        for nw in noWaiting
+            for trans in g.scoreTrans
+                if trans[2] == "GANG" && trans[1] == nw
+                    for loser in trans[4]
+                        g.players[loser].score += trans[3]
+                        g.players[nw].score -= trans[3]
+                    end
+                end
+            end
+        end
+    end
+    # check for three-typed pigs
+    normal::Vector{Int} = []
+    pigs::Vector{Int} = []
+    for i = 1:4
+        nTypes::Int = vcat(g.players[i].playerTiles,
+                g.players[i].peng, g.players[i].gang) |> getTypes |> length
+        if nTypes == 3
+            push!(pigs, i)
+        else
+            push!(normal, i)
+        end
+    end
+    for pig in pigs
+        for n in normal
+            p.players[pig].score -= 128
+            p.players[n].score += 128
+        end
+    end
+    updateStates(g, (0,"FINI",EMPTY_TILE,0))
 end
 
 # call this with `@async`
 function play_game(g::Game)
+    global table_game
+    global table_pnames
     while true
         player_left::Bool = false
         for p in g.players
             if !haskey(pname_connection, p.pname)
+                pop!(table_pnames, game.table)
+                pop!(table_game, game.table)
                 player_left = true
                 break
             end

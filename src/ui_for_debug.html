@@ -359,26 +359,41 @@
         }
     }
 
+    function clearTable(){
+        document.getElementById("buffer").innerHTML = "";
+        document.getElementById("p1given").innerHTML = "";
+        document.getElementById("p2given").innerHTML = "";
+        document.getElementById("p3given").innerHTML = "";
+        document.getElementById("p4given").innerHTML = "";
+    }
+
     function processMsg(msg, p) {
         let [header, content] = msg.split("!");
         switch (header) {
             case "ACT":
+                p.askedToSend = false;
+                if (content.substr(5,4) == "INIT"){
+                    clearTable();
+                }
                 interpretAction(content);
                 break;
             case "STATE":
                 updateState(content);
                 break;
-            case "UPDATE":
-                p.askedToSend = false;
-                let [action, state] = content.split(";");
-                interpretAction(action.substring(4));
-                updateState(state.substring(6));
-                break;
+            // case "UPDATE":
+            //     let [action, state] = content.split(";");
+            //     interpretAction(action.substring(4));
+            //     updateState(state.substring(6));
+            //     break;
             case "ACTIVE":
                 for (nametag of document.getElementsByClassName("pnames")){
-                    nametag.className = "pnames";
+                    if (nametag.className == "pnames active"){
+                        nametag.className = "pnames";
+                    }
                 }
-                document.getElementById("pname"+namelist[content].index).className += " active";
+                if (document.getElementById("pname" + namelist[content].index).className == "pnames"){
+                    document.getElementById("pname" + namelist[content].index).className = "pnames active";
+                }
                 break;
             case "PLAY":
                 p.askedToSend = true;

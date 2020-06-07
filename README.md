@@ -1,2 +1,2 @@
 # MahjongEnvironment
-Mahjong game implementation
+This is an implementation of Chengdu Mahjong.

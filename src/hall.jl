@@ -69,12 +69,13 @@ function make_matches()
             pnamestring = ""
             for p in players
                 pnamestring *= (p * ";")
+                push!(pname_table, p => tblnum)
             end
             for pn in players
                 writeguarded(pname_connection[pn], "GETIN!$tblnum")
                 writeguarded(pname_connection[pn], "PLAYERS!$pnamestring")
             end
-            game = Game(players)
+            game = Game(tblnum, players)
             push!(table_game, tblnum => game)
             # start the game
 
@@ -126,7 +127,9 @@ function coroutine(ws)
         data, success = readguarded(ws)
         success || (println("$pname disconnected"); break)
         string_data = String(data)
-        # println(pname, " sent: ", string_data)
+
+        println(pname, " sent: ", string_data)
+
         header, msg = chop(string_data)
         if pname == ""
             if header == "PNAME" && !isempty(msg)
@@ -180,10 +183,10 @@ function coroutine(ws)
                     end
                     if nplayers == 3 # it's 4 now after the last player joined
                         # create a game
-                        game = Game(players)
+                        game = Game(table_num, players)
                         push!(table_game, table_num => game)
                         # start the game
-
+                        play_game(game)
                     end
                 else
                     writeguarded(ws, "ERR!Table full")

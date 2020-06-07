@@ -6,7 +6,7 @@ function checkHu(g::Game, p::Player)
 
     matchedRules::Dict{Vector{TileList}, String} =
                     Dict{Vector{TileList}, String}()
-    existing_nums = getNums(p.playerTiles)
+    existing_nums = getNums(vcat(p.playerTiles, p.peng, p.gang))
 
     findHu(p.playerTiles[1:p.playableNum],
             [0, 0, length(p.peng) + length(p.gang)],
@@ -17,8 +17,8 @@ function checkHu(g::Game, p::Player)
     matches = keys(matchedRules)
 
     is19::Bool = issubset(existing_nums, Set([0x01, 0x02, 0x03, 0x07, 0x08, 0x09]))
-    is19 && issubset(getNums(p.peng), Set([0x01, 0x02])) || (is19 = false)
-    is19 && issubset(getNums(p.gang), Set([0x01, 0x02])) || (is19 = false)
+    is19 && issubset(getNums(p.peng), Set([0x01, 0x09])) || (is19 = false)
+    is19 && issubset(getNums(p.gang), Set([0x01, 0x09])) || (is19 = false)
     for r in matches
         if is19
             for group in r
@@ -29,6 +29,7 @@ function checkHu(g::Game, p::Player)
         if matchedRules[r] == "basic"
             is19 && (matchedRules[r] = "onenine")
         elseif matchedRules[r] == "triples"
+            p.playableNum == 2 && (matchedRules[r] = "goldhook")
             existing_nums == Set([0x02, 0x05, 0x08]) &&
                 (matchedRules[r] = "triples258")
         elseif length(p.quadruples) > 1
@@ -50,7 +51,7 @@ function checkHu(g::Game, p::Player)
             end
         end
     end
-    return maxHu.second#, maxHu.first
+    return maxHu.second
 end
 
 # find tiles the player can hu
