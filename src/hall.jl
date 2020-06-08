@@ -33,6 +33,8 @@ function pexit(ws::WebSocket, pname::String)
     global connection_pname
     global wanted_to_send
     global pname_table
+    global table_game
+    global table_pnames
     try
         pop!(pname_connection, pname)
         pop!(pname_msg, pname)
@@ -43,10 +45,16 @@ function pexit(ws::WebSocket, pname::String)
     end
     try
         tblnum = pop!(pname_table, pname)
-        for i = 1:length(table_pnames[tblnum])
-            if table_pnames[tblnum][i] == pname
-                deleteat!(table_pnames[tblnum], i)
-                break
+        # dismiss table if players < 3
+        if length(table_pnames[tblnum]) < 3
+            pop!(table_pnames, tblnum)
+            pop!(table_game, tblnum)
+        else
+            for i = 1:length(table_pnames[tblnum])
+                if table_pnames[tblnum][i] == pname
+                    deleteat!(table_pnames[tblnum], i)
+                    break
+                end
             end
         end
     catch
@@ -78,7 +86,7 @@ function make_matches()
             game = Game(tblnum, players)
             push!(table_game, tblnum => game)
             # start the game
-
+            @async play_game(game)
         end
     end
     return
@@ -125,10 +133,10 @@ function coroutine(ws)
     pname = ""
     while isopen(ws)
         data, success = readguarded(ws)
-        success || (println("$pname disconnected"); break)
+        success || break
         string_data = String(data)
 
-        println(pname, " sent: ", string_data)
+        # println(pname, " sent: ", string_data)
 
         header, msg = chop(string_data)
         if pname == ""
@@ -143,7 +151,7 @@ function coroutine(ws)
                     push!(wanted_to_send, pname => false)
                     push!(pname_msg, pname => Channel{String}(1))
                 else
-                    println("$pname disconnected")
+                    # println("$pname disconnected")
                     break
                 end
             end
@@ -161,7 +169,7 @@ function coroutine(ws)
                 push!(mmq, pname)
                 make_matches()
             else
-                println("$pname disconnected")
+                # println("$pname disconnected")
                 break
             end
         elseif header == "JOINTBL"
@@ -186,7 +194,7 @@ function coroutine(ws)
                         game = Game(table_num, players)
                         push!(table_game, table_num => game)
                         # start the game
-                        play_game(game)
+                        @async play_game(game)
                     end
                 else
                     writeguarded(ws, "ERR!Table full")
@@ -217,10 +225,12 @@ end
 
 function gatekeeper(httpreq, websoc)
     origin = WebSockets.origin(httpreq)
-    println("new connection from: ", origin)
+    # println("new connection from: ", origin)
+
     # all connections accepted
     coroutine(websoc)
-    println(origin, " is out")
+
+    # println(origin, " is out")
 end
 httpresp(req::Request) = HTML_FILE |> Response
 const server = WebSockets.ServerWS(httpresp, gatekeeper)

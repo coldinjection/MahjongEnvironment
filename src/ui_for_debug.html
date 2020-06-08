@@ -351,7 +351,7 @@
 
     function login(p) {
         p.socket = new WebSocket("ws://127.0.0.1:8080");
-        setTimeout(() => { p.socket.send("PNAME!" + p.name); }, 4000);
+        p.socket.onopen = (() => { p.socket.send("PNAME!" + p.name) });
         p.socket.onmessage = function (e){
             p.messages.innerHTML = e.data + "\n- - - - - - - -\n" +
                                     p.messages.innerHTML;
