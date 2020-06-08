@@ -350,7 +350,7 @@
     var tableNum = "";
 
     function login(p) {
-        p.socket = new WebSocket("ws://127.0.0.1:8080");
+        p.socket = new WebSocket("ws://"+location.host);
         p.socket.onopen = (() => { p.socket.send("PNAME!" + p.name) });
         p.socket.onmessage = function (e){
             p.messages.innerHTML = e.data + "\n- - - - - - - -\n" +
