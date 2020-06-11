@@ -37,6 +37,7 @@ const EMPTY_TILE = Tile(0x00, 0x00)
 @inline getTypes(playerTiles::TileList) = Set(map(getType, playerTiles))
 @inline getNums(playerTiles::TileList) = Set(map(getNum, playerTiles))
 @inline emoji(t::Tile) = EMOJIS[t]
+@inline stringify(t::Tile) = string(t.num)*TYPES[t.type]
 
 # extend `isless` so that tiles can be sorted
 isless(t1::Tile, t2::Tile) = isless(t1.type, t2.type) ||

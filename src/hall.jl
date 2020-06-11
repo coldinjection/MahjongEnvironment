@@ -136,7 +136,7 @@ function coroutine(ws)
         success || break
         string_data = String(data)
 
-        # println(pname, " sent: ", string_data)
+        println(pname, " sent: ", string_data)
 
         header, msg = chop(string_data)
         if pname == ""
@@ -194,7 +194,7 @@ function coroutine(ws)
                         game = Game(table_num, players)
                         push!(table_game, table_num => game)
                         # start the game
-                        @async play_game(game)
+                        # @async play_game(game)
                     end
                 else
                     writeguarded(ws, "ERR!Table full")

@@ -100,6 +100,9 @@ function initGame(game::Game)
                     dealTiles(game, tilesPerPlayer))
     # assign tiles to players and find tingpai for the first time
     for i = 1:4
+        game.players[i].peng = []
+        game.players[i].gang = []
+        game.players[i].hu   = []
         game.players[i].playerTiles = playerTiles[:,i]
         game.players[i].playableNum = tilesPerPlayer + 1
         findTing(game, game.players[i])
@@ -243,7 +246,7 @@ function react_after_giving(game::Game)
             resp_i::String = ask_to_play(game.players[i].pname,
                             build_question(opt_i, game.bufferedTile))
             opt_i[end] == "HULE" && resp_i != "HULE" && (game.guoshui[i] = true)
-            if resp_i != "PASS" && resp_i in opt_i
+            if resp_i != "PASS" && resp_i[1:4] in opt_i
                 if isempty(hu_players) || resp_i == "HULE"
                     if resp_i == "HULE"
                         push!(hu_players, i)
@@ -440,7 +443,7 @@ function play_a_round(g::Game)
             if isempty(g.players[i].tingPai)
                 push!(noWaiting, i)
             else
-                push!(wating, i)
+                push!(waiting, i)
             end
         end
     end
@@ -448,12 +451,12 @@ function play_a_round(g::Game)
         # check the largest ting
         for w in waiting
             largest::Int = 0
-            for score in values(g.players[w].tingPai)
-                score > largest && (largest = score)
+            for match in values(g.players[w].tingPai)
+                g.hupaiRules[match] > largest && (largest = g.hupaiRules[match])
             end
             for nw in noWaiting
-                g.players[nw].score -= score
-                g.players[w].score += score
+                g.players[nw].score -= largest
+                g.players[w].score += largest
             end
         end
         # return gang scores
@@ -472,9 +475,9 @@ function play_a_round(g::Game)
     normal::Vector{Int} = []
     pigs::Vector{Int} = []
     for i = 1:4
-        nTypes::Int = vcat(g.players[i].playerTiles,
-                g.players[i].peng, g.players[i].gang) |> getTypes |> length
-        if nTypes == 3
+        types::Set{UInt8} = vcat(g.players[i].playerTiles,
+                g.players[i].peng, g.players[i].gang) |> getTypes
+        if g.players[i].queType in types
             push!(pigs, i)
         else
             push!(normal, i)
@@ -482,8 +485,8 @@ function play_a_round(g::Game)
     end
     for pig in pigs
         for n in normal
-            p.players[pig].score -= 128
-            p.players[n].score += 128
+            g.players[pig].score -= 128
+            g.players[n].score += 128
         end
     end
     updateStates(g, (0,"FINI",EMPTY_TILE,0))
@@ -497,8 +500,8 @@ function play_game(g::Game)
         player_left::Bool = false
         for p in g.players
             if !haskey(pname_connection, p.pname)
-                pop!(table_pnames, game.table)
-                pop!(table_game, game.table)
+                pop!(table_pnames, g.table)
+                pop!(table_game, g.table)
                 player_left = true
                 break
             end

@@ -21,7 +21,7 @@ reportAction(g::Game) = reportAction(g, g.hand_rec[end])
 function updateStates(g::Game, act::Tuple{Int,String,Tile,Int})
     info::String = "STATE!"
     changed_players::Vector{Int} = [act[1], act[4]]
-    if act[4] == 0
+    if act[4] < 1
         changed_players = [1,2,3,4]
     end
     for ind in changed_players

@@ -199,8 +199,9 @@ function gangPai(p::Player, gt::Tile)
                 break
             end
         end
-    elseif gt == p.playerTiles[1]
+    elseif gt in p.triples
         # when the gang tile is the one just taken
+        # or given out by another player
         p.playerTiles[1] = EMPTY_TILE
         for i = 1:p.playableNum
             # remove the other 3
@@ -220,9 +221,9 @@ function gangPai(p::Player, gt::Tile)
                 break
             end
         end
-        sortTiles(p)
         # 3 removed
         p.playableNum -= 3
+        sortTiles(p)
     end
 end
 
