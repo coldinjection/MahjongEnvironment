@@ -378,8 +378,6 @@
             case "GETIN":
                 tableNum = content;
                 p2.socket.send("JOINTBL!" + tableNum);
-                p3.socket.send("JOINTBL!" + tableNum);
-                p4.socket.send("JOINTBL!" + tableNum);
             case "ACT":
                 p.askedToSend = false;
                 if (content.substr(5,4) == "INIT"){
@@ -444,6 +442,11 @@
                 tableNum = content;
                 break;
             case "PLAYERS":
+                if(p == p2 && content.split(";").length == 3){
+                    p3.socket.send("JOINTBL!" + tableNum);
+                }else if(p == p3 && content.split(";").length == 4){
+                    p4.socket.send("JOINTBL!" + tableNum);
+                }
                 // get player names, decide order of players
                 // not needed for debugging UI (always 1~4)
                 break;

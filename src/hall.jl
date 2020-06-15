@@ -177,7 +177,7 @@ function coroutine(ws)
             if haskey(table_pnames, table_num)
                 players = table_pnames[table_num]
                 nplayers = length(players)
-                if nplayers < 4
+                if nplayers < 4 && !(pname in table_pnames[table_num])
                     push!(table_pnames[table_num], pname)
                     push!(pname_table, pname => table_num)
                     players = table_pnames[table_num]
@@ -197,7 +197,7 @@ function coroutine(ws)
                         @async play_game(game)
                     end
                 else
-                    writeguarded(ws, "ERR!Table full")
+                    writeguarded(ws, "ERR!Table full or already joined")
                 end
             else
                 writeguarded(ws, "ERR!No such table")
