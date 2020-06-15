@@ -272,25 +272,29 @@
 
     <div id="background"><table id="bgtable"><tr>
         <td><div>
-            <button id="p1login" onclick="login(p1)">P1 LOGIN</button>
+            <button id="p1login" onclick="login(p1);login(p2);login(p3);login(p4);">P1~P4 LOGIN</button>
             <button id="p1join" onclick="p1.socket.send('ADDTBL')">P1~P4 JOIN & PLAY</button>
+            <span>P1</span>
             <br>
             <textarea id="p1msg" rows="40" spellcheck="false"></textarea>
         </div></td>
         <td><div>
-            <button id="p2login" onclick="login(p2)">P2 LOGIN</button>
+            <span>Player 2</span>
+            <!-- <button id="p2login" onclick="login(p2)">P2 LOGIN</button> -->
             <!-- <button id="p2join" onclick="p2.socket.send('JUSTJOIN')">P2 JOIN</button> -->
             <br>
             <textarea id="p2msg" rows="40" spellcheck="false"></textarea>
         </div></td>
         <td><div>
-            <button id="p3login" onclick="login(p3)">P3 LOGIN</button>
+            <span>Player 3</span>
+            <!-- <button id="p3login" onclick="login(p3)">P3 LOGIN</button> -->
             <!-- <button id="p3join" onclick="p3.socket.send('JUSTJOIN')">P3 JOIN</button> -->
             <br>
             <textarea id="p3msg" rows="40" spellcheck="false"></textarea>
         </div></td>
         <td><div>
-            <button id="p4login" onclick="login(p4)">P4 LOGIN</button>
+            <span>Player 4</span>
+            <!-- <button id="p4login" onclick="login(p4)">P4 LOGIN</button> -->
             <!-- <button id="p4join" onclick="p4.socket.send('JUSTJOIN')">P4 JOIN</button> -->
             <br>
             <textarea id="p4msg" rows="40" spellcheck="false"></textarea>
