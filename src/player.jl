@@ -170,7 +170,6 @@ end
 
 # peng a tile given by another player
 # the player will have to give out a tile after peng
-# so always call giveTile(p, ti) immediately after pengPai(p)
 function pengPai(p::Player, tile::Tile)
     push!(p.peng, tile)
     # remove the other 2 peng tiles
@@ -185,8 +184,7 @@ function pengPai(p::Player, tile::Tile)
     return
 end
 
-# the player plays the next hand (take and give a tile) after gang
-# gang an existing quadruple in playerTiles
+# the player plays the next hand (take a tile) after gang
 function gangPai(p::Player, gt::Tile)
     push!(p.gang, gt)
     if gt in p.peng

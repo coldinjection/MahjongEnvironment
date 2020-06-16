@@ -222,41 +222,41 @@
 
         <div class="pnames" id="pname1"><span></span>
             <div id="queBt1" style="display:none">
-                <button disabled onclick="buttonResponse(p1, 'GM!WAN', event);
+                <button disabled onclick="buttonResponse(p1, 'GM!WAN');
                     document.getElementById('queBt1').style.display = 'none';">WAN</button>
-                <button disabled onclick="buttonResponse(p1, 'GM!TIAO', event);
+                <button disabled onclick="buttonResponse(p1, 'GM!TIAO');
                     document.getElementById('queBt1').style.display = 'none';">TIAO</button>
-                <button disabled onclick="buttonResponse(p1, 'GM!TONG', event);
+                <button disabled onclick="buttonResponse(p1, 'GM!TONG');
                     document.getElementById('queBt1').style.display = 'none';">TONG</button>
             </div>
         </div>
         <div class="pnames" id="pname2"><span></span>
             <div id="queBt2" style="display:none">
-                <button disabled onclick="buttonResponse(p2, 'GM!WAN', event);
+                <button disabled onclick="buttonResponse(p2, 'GM!WAN');
                     document.getElementById('queBt2').style.display = 'none';">WAN</button>
-                <button disabled onclick="buttonResponse(p2, 'GM!TIAO', event);
+                <button disabled onclick="buttonResponse(p2, 'GM!TIAO');
                     document.getElementById('queBt2').style.display = 'none';">TIAO</button>
-                <button disabled onclick="buttonResponse(p2, 'GM!TONG', event);
+                <button disabled onclick="buttonResponse(p2, 'GM!TONG');
                     document.getElementById('queBt2').style.display = 'none';">TONG</button>
             </div>
         </div>
         <div class="pnames" id="pname3"><span></span>
             <div id="queBt3" style="display:none">
-                <button disabled onclick="buttonResponse(p3, 'GM!WAN', event);
+                <button disabled onclick="buttonResponse(p3, 'GM!WAN');
                     document.getElementById('queBt3').style.display = 'none';">WAN</button>
-                <button disabled onclick="buttonResponse(p3, 'GM!TIAO', event);
+                <button disabled onclick="buttonResponse(p3, 'GM!TIAO');
                     document.getElementById('queBt3').style.display = 'none';">TIAO</button>
-                <button disabled onclick="buttonResponse(p3, 'GM!TONG', event);
+                <button disabled onclick="buttonResponse(p3, 'GM!TONG');
                     document.getElementById('queBt3').style.display = 'none';">TONG</button>
             </div>
         </div>
         <div class="pnames" id="pname4"><span></span>
             <div id="queBt4" style="display:none">
-                <button disabled onclick="buttonResponse(p4, 'GM!WAN', event);
+                <button disabled onclick="buttonResponse(p4, 'GM!WAN');
                     document.getElementById('queBt4').style.display = 'none';">WAN</button>
-                <button disabled onclick="buttonResponse(p4, 'GM!TIAO', event);
+                <button disabled onclick="buttonResponse(p4, 'GM!TIAO');
                     document.getElementById('queBt4').style.display = 'none';">TIAO</button>
-                <button disabled onclick="buttonResponse(p4, 'GM!TONG', event);
+                <button disabled onclick="buttonResponse(p4, 'GM!TONG');
                     document.getElementById('queBt4').style.display = 'none';">TONG</button>
             </div>
         </div>
@@ -557,6 +557,8 @@
         }
         if (finished == "FIN"){
             document.getElementById("pname"+player.index).className = "pnames finished";
+        }else if (finished == "ACT"){
+            document.getElementById("pname" + player.index).className = "pnames";
         }
     }
 
@@ -583,7 +585,7 @@
     function selectTile(player, ind, evt){
         if (evt.target.className == "tilecell selected"){
             // give out the tile
-            sendMsg(player, "GM!GIVE" + ind);
+            buttonResponse(player, "GM!GIVE" + ind);
             evt.target.className = "tilecell";
         }else{
             if(evt.target.innerHTML != ""){
@@ -602,7 +604,7 @@
         }
         player.askedToSend = false;
     }
-    function buttonResponse(player, msg, evt){
+    function buttonResponse(player, msg){
         sendMsg(player, msg);
         document.getElementById("pass"+player.index).disabled = true;
         document.getElementById("gang" + player.index).disabled = true;

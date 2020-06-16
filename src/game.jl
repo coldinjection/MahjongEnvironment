@@ -100,6 +100,7 @@ function initGame(game::Game)
                     dealTiles(game, tilesPerPlayer))
     # assign tiles to players and find tingpai for the first time
     for i = 1:4
+        game.players[i].isFinished = false
         game.players[i].peng = []
         game.players[i].gang = []
         game.players[i].hu   = []
