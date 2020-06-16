@@ -296,7 +296,7 @@ function calcScores(game::Game)
         # calculate the score
         score = 0
         if (rec[2] == "HULE")
-            println("$(rec[2]) hus by $(game.players[rec[1]].tingPai[rec[3]])")
+            # println("$(rec[1]) hus by $(game.players[rec[1]].tingPai[rec[3]])")
             # 基础分 base score
             score = game.hupaiRules[game.players[rec[1]].tingPai[rec[3]]]
             # 自摸 self-draw
@@ -340,8 +340,8 @@ function calcScores(game::Game)
                 end
             end
         end
-        game.scoreTrans = vcat(game.scoreTrans, transactions)
     end
+    game.scoreTrans = vcat(game.scoreTrans, transactions)
 end
 
 function play_a_round(g::Game)
