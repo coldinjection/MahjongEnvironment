@@ -345,10 +345,9 @@ function calcScores(game::Game)
     game.scoreTrans = vcat(game.scoreTrans, transactions)
 end
 
-function play_a_round(g::Game)
+function play_a_round(g::Game, first_player::Int = ceil(Int, rand()*4))
     g.giving_player = 0
-    # emulate rolling a dice
-    g.acting_player = ceil(Int, rand()*4)
+    g.acting_player = first_player
 
     # ask every player to decide the que type
     @sync for i = 1:4
