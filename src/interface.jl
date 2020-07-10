@@ -4,7 +4,7 @@ const TIME_OUT = 600
 function broadcastMsg(g::Game, msg::String)
     for p in g.players
         try
-            writeguarded(pname_connection[p.pname], msg)
+            writeguarded(p.ws, msg)
         catch
             # ignore if disconnected
         end
@@ -35,13 +35,13 @@ function updateStates(g::Game, act::Tuple{Int,String,Tile,Int})
         for p in g.players
             if p.pname == player_strings[1]
                 try
-                    writeguarded(pname_connection[p.pname], info_private)
+                    writeguarded(p.ws, info_private)
                 catch
                     # ignore if the player has disconnected
                 end
             else
                 try
-                    writeguarded(pname_connection[p.pname], info_public)
+                    writeguarded(p.ws, info_public)
                 catch KeyError
                     # ignore if the player has disconnected
                 end
@@ -53,18 +53,16 @@ updateStates(g::Game) = updateStates(g, g.hand_rec[end])
 
 # ask a player to make a move and wait for the player's response
 # call this function with @async
-function ask_to_play(pname::String, question::String)
-    global pname_msg
-    global wanted_to_send
+function ask_to_play(player::Player, question::String)
     try
-        if writeguarded(pname_connection[pname], question)
-            wanted_to_send[pname] = true
-            response = "AUTO"
+        if writeguarded(player.ws, question)
+            player.wantedToSend = true
+            response::String = "AUTO"
             # put "AUTO" in the channel
             # if the player doesn't response in time
-            tm::Timer = Timer((t)->(cancel_chance(pname)), TIME_OUT)
+            tm::Timer = Timer((t)->(cancel_chance(player)), TIME_OUT)
             @async wait(tm)
-            response = take!(pname_msg[pname])
+            response = take!(player.msgIn)
             close(tm)
             # writeguarded(pname_connection[pname], "GOTIT!")
             return response
@@ -79,11 +77,11 @@ function ask_to_play(pname::String, question::String)
     end
 end
 # cancel the player's chance to make and action
-function cancel_chance(pname::String)
+function cancel_chance(player::Player)
     try
-        if wanted_to_send[pname]
-            put!(pname_msg[pname], "AUTO")
-            wanted_to_send[pname] = false
+        if player.wantedToSend
+            put!(player.msgIn, "AUTO")
+            player.wantedToSend = false
         end
     catch
 

@@ -23,9 +23,8 @@ mutable struct Game
     giving_player::Int
     nStillPlaying::Int
     guoshui::Dict{Int, Bool}
-    function Game(tbl::String, pnames::Vector{String}, style::String = DEFAULT_STYLE, mode::Dict{String, Bool} = DEFAULT_MODE)
-        length(pnames) != 4 && error("wrong number of players")
-        players::Vector{Player} = [Player(pnames[i]) for i = 1:4]
+    function Game(tbl::String, players::Vector{Player}, style::String = DEFAULT_STYLE, mode::Dict{String, Bool} = DEFAULT_MODE)
+        length(players) != 4 && error("wrong number of players")
         new(tbl, style, mode, Dict{String, Int}(), players, TileList([]), EMPTY_TILE,
             0, Records([]), Records([]), Transactions([]), 0, 0, 0, Dict{Int, Bool}())
     end
@@ -148,7 +147,7 @@ function player_pengs(game::Game)
     findTing(game, game.players[game.acting_player])
     updateStates(game)
     resp_after_peng::String = "AUTO"
-    resp_after_peng = ask_to_play(game.players[game.acting_player].pname,
+    resp_after_peng = ask_to_play(game.players[game.acting_player],
                                     "PLAY!ON:PENG;GIVE")
     player_gives(game, resp_after_peng[5:end])
 end
@@ -189,7 +188,7 @@ function player_gangs(game::Game, tile::String)
         @sync for i = 1:4
             i == game.acting_player && continue
             if haskey(game.players[i].tingPai, gt)
-                @async if ask_to_play(game.players[i].pname, "PLAY!ON:$(EMOJIS[gt]);HULE") == "HULE"
+                @async if ask_to_play(game.players[i], "PLAY!ON:$(EMOJIS[gt]);HULE") == "HULE"
                     push!(hu_players, i)
                 else
                     game.guoshui[i] = true
@@ -244,7 +243,7 @@ function react_after_giving(game::Game)
         # skip if the only option is "PASS"
         opt_i == ["PASS"] && continue
         @async begin
-            resp_i::String = ask_to_play(game.players[i].pname,
+            resp_i::String = ask_to_play(game.players[i],
                             build_question(opt_i, game.bufferedTile))
             opt_i[end] == "HULE" && resp_i != "HULE" && (game.guoshui[i] = true)
             if resp_i != "PASS" && resp_i[1:4] in opt_i
@@ -253,7 +252,7 @@ function react_after_giving(game::Game)
                         push!(hu_players, i)
                     else
                         for player in game.players
-                            cancel_chance(player.pname)
+                            cancel_chance(player)
                         end
                         if resp_i == "PENG"
                             game.acting_player = i
@@ -353,7 +352,7 @@ function play_a_round(g::Game, first_player::Int = ceil(Int, rand()*4))
     @sync for i = 1:4
         @async begin
             que::String = "AUTO"
-            que = ask_to_play(g.players[i].pname, "QUE!")
+            que = ask_to_play(g.players[i], "QUE!")
             if que in ("WAN", "TIAO", "TONG")
                 g.players[i].queType = eval(Meta.parse(que))
             else
@@ -394,7 +393,7 @@ function play_a_round(g::Game, first_player::Int = ceil(Int, rand()*4))
             resp_this = "HULE"
         else
             # ask the player to make an option
-            resp_this = ask_to_play(g.players[g.acting_player].pname,
+            resp_this = ask_to_play(g.players[g.acting_player],
                                             build_question(opt_this, t))
         end
         # make the default option if the response is somehow not expected
@@ -494,20 +493,15 @@ end
 
 # call this with `@async`
 function play_game(g::Game)
-    global table_game
-    global table_pnames
-    while true
-        player_left::Bool = false
+    player_left::Bool = false
+    while !player_left
+        initGame(g)
+        play_a_round(g)
         for p in g.players
-            if !haskey(pname_connection, p.pname)
-                pop!(table_pnames, g.table)
-                pop!(table_game, g.table)
+            if !isopen(p.ws)
                 player_left = true
                 break
             end
         end
-        player_left && break
-        initGame(g)
-        play_a_round(g)
     end
 end

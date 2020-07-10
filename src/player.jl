@@ -15,15 +15,21 @@ mutable struct Player
     queType::UInt8 # the type of tiles the player must get rid of
     score::Int
     isFinished::Bool
+    # player IO
+    table::String
+    ws::WebSocket
+    msgIn::Channel{String}
+    wantedToSend::Bool
     # initial playableNum is length(playerTiles)
     # because the last tile is a buffer
     # the buffer tile is always at playerTiles[1]
     # tiles become unplayable when they are peng(ed) or gang(ed)
-    Player(pname::String) =
+    Player(pname::String, ws::WebSocket, chnl::Channel{String}) =
         new(pname, TileList([]), Dict{Tile, String}(),
             TileList([]), TileList([]), TileList([]),
             TileList([]), TileList([]), TileList([]),
-            0, 0x00, 0, false)
+            0, 0x00, 0, false,
+            "", ws, chnl, false)
 end
 
 @inline decideQue(p::Player, t::UInt8) = (p.queType = t)
