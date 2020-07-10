@@ -10,10 +10,9 @@ mutable struct  Hall
     table_players::Dict{String, Vector{Player}}
     queue::Vector{Player}
     function Hall(ip::String = "127.0.0.1", port::Int = 8080;
-                htmlFIle::String = joinpath(@__DIR__, "ui_for_debug.html"),
+                htmlPath::String = joinpath(@__DIR__, "..\\WebUI\\debugging_UI.html"),
                 maxng::Int = 20, maxnt::Int = 40)
-        
-        html::String = read(htmlFIle, String)
+        html::String = read(htmlPath, String)
         new(ip, port, html, maxng, maxnt, 700,
             Dict{String, Player}(),
             Dict{String, Game}(),
