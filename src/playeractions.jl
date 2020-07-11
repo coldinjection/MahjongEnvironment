@@ -56,6 +56,7 @@ end
 
 # find tiles the player can hu
 function findTing(game::Game, p::Player)
+    p.isFinished && return
     p.tingPai = Dict{Tile, String}()
     sortTiles(p)
     original::TileList = copy(p.playerTiles)

@@ -27,6 +27,16 @@ end
 reportAction(g::Game) = reportAction(g, g.hand_rec[end])
 
 function updateStates(g::Game, act::Tuple{Int,String,Tile,Int})
+    if act[2] == "INIT"
+        try
+           open(g.historyPath, "a") do f
+                for i = 1:4
+                    println(f, g.players[i].pname)
+                end
+            end 
+        catch
+        end
+    end
     info::String = "STATE!"
     changed_players::Vector{Int} = [act[1], act[4]]
     if act[4] < 1
@@ -55,7 +65,7 @@ function updateStates(g::Game, act::Tuple{Int,String,Tile,Int})
                 end
             end
         end
-        if g.historyPath != "" && act[2] == "SCORES" || act[2] == "INIT"
+        if g.historyPath != "" && act[2] == "SCORES" || act[2] == "INIT" || act[2] == "FINI"
             try
                 open(g.historyPath, "a") do f
                     println(f, info_private)

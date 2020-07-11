@@ -140,13 +140,17 @@ function coroutine(hall::Hall, ws::WebSocket)
                 hall.pname_player[pname].wantedToSend = false
             end
         elseif header == "JUSTJOIN"
-            # put client in match making queue
-            if writeguarded(ws, "INQUEUE!")
-                push!(hall.queue, hall.pname_player[pname])
-                make_matches!(hall)
+            if hall.pname_player[pname] in hall.queue
+                writeguarded(ws, "ERR!Already in queue")
             else
-                # println("$pname disconnected")
-                break
+                # put client in match making queue
+                if writeguarded(ws, "INQUEUE!")
+                    push!(hall.queue, hall.pname_player[pname])
+                    make_matches!(hall)
+                else
+                    # println("$pname disconnected")
+                    break
+                end
             end
         elseif header == "JOINTBL"
             if haskey(hall.table_players, msg)
