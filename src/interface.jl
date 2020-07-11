@@ -15,6 +15,14 @@ function reportAction(g::Game, act::Tuple{Int,String,Tile,Int})
     info::String = "ACT!" * string(act[1]) * act[2] *
                     EMOJIS[act[3]] * string(act[4])
     broadcastMsg(g, info)
+    if g.historyPath != ""
+        try
+            open(g.historyPath, "a") do f
+                println(f, info)
+            end
+        catch
+        end
+    end
 end
 reportAction(g::Game) = reportAction(g, g.hand_rec[end])
 
@@ -45,6 +53,14 @@ function updateStates(g::Game, act::Tuple{Int,String,Tile,Int})
                 catch KeyError
                     # ignore if the player has disconnected
                 end
+            end
+        end
+        if g.historyPath != "" && act[2] == "SCORES" || act[2] == "INIT"
+            try
+                open(g.historyPath, "a") do f
+                    println(f, info_private)
+                end
+            catch
             end
         end
     end

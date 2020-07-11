@@ -68,7 +68,9 @@ function make_matches!(hall::Hall)
                 writeguarded(p.ws, "GETIN!$tblnum")
                 writeguarded(p.ws, "PLAYERS!$pnamestring")
             end
-            game = Game(tblnum, players)
+            filename::String = replace(pnamestring, ";" => "-")
+            filename *= tblnum * ".gh"
+            game = Game(tblnum, players, hp = joinpath(@__DIR__, "..\\temp\\$filename"))
             push!(hall.table_game, tblnum => game)
             # start the game
             @async play_game(game)
@@ -112,7 +114,7 @@ function coroutine(hall::Hall, ws::WebSocket)
         success || break
         string_data = String(data)
 
-        println(pname, " sent: ", string_data)
+        # println(pname, " sent: ", string_data)
 
         header, msg = chop(string_data)
         if pname == ""
@@ -197,12 +199,12 @@ end
 
 function gatekeeper(httpreq, websoc, hall)
     origin = WebSockets.origin(httpreq)
-    println("new connection from: ", origin)
+    # println("new connection from: ", origin)
 
     # all connections accepted
     coroutine(hall, websoc)
 
-    println(origin, " is out")
+    # println(origin, " is out")
 end
 
 function serve_hall(hall::Hall)
