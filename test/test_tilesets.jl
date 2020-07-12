@@ -1,4 +1,5 @@
-# include("..\\src\\tiles.jl")
+using MahjongEnvironment
+
 groups234 = [Tile(t) for t in [
             0x44, 0x44, 0x26,
             0x12, 0x13, 0x14,
@@ -48,5 +49,3 @@ lucky = [Tile(t) for t in [
             0x25, 0x26, 0x27,
             0x14, 0x14]
         ]
-error01 = [SIJOME[string(t)] for t in "🀫🀈🀈🀉🀏🀐🀑🀓🀔🀖🀗🀘🀜🀞"]
-error02 = [SIJOME[string(t)] for t in "🀫🀇🀈🀍🀎🀏🀔🀙🀙🀟🀠🀠🀠🀡"]
