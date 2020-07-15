@@ -491,6 +491,7 @@ function play_a_round(g::Game, first_player::Int = ceil(Int, rand()*4))
         end
     end
     updateStates(g, (0,"FINI",EMPTY_TILE,0))
+    broadcastMsg(g, "EOG!")
 end
 
 # call this with `@async`

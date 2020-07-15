@@ -98,7 +98,7 @@ function build_pname(msg::String)
     return pname
 end
 
-function chop(msg)
+function chop(msg::String)
     chopped = split(msg, "!", keepempty = true)
     try
         return (String(chopped[1]), String(chopped[2]))
