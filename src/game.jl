@@ -24,7 +24,7 @@ mutable struct Game
     nStillPlaying::Int
     guoshui::Dict{Int, Bool}
     historyPath::String
-    function Game(tbl::String, players::Vector{Player}; hp = "",
+    function Game(tbl::String, players::Vector{Player}; hp::String = "",
                 style::String = DEFAULT_STYLE, mode::Dict{String, Bool} = DEFAULT_MODE)
         length(players) != 4 && error("wrong number of players")
         new(tbl, style, mode, Dict{String, Int}(), players, TileList([]), EMPTY_TILE,
