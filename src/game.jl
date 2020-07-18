@@ -24,11 +24,12 @@ mutable struct Game
     nStillPlaying::Int
     guoshui::Dict{Int, Bool}
     historyPath::String
+    historyFile::String
     function Game(tbl::String, players::Vector{Player}; hp::String = "",
                 style::String = DEFAULT_STYLE, mode::Dict{String, Bool} = DEFAULT_MODE)
         length(players) != 4 && error("wrong number of players")
         new(tbl, style, mode, Dict{String, Int}(), players, TileList([]), EMPTY_TILE,
-            0, Records([]), Records([]), Transactions([]), 0, 0, 0, Dict{Int, Bool}(), hp)
+            0, Records([]), Records([]), Transactions([]), 0, 0, 0, Dict{Int, Bool}(), hp, "")
     end
 end
 
@@ -108,6 +109,9 @@ function initGame(game::Game)
         game.players[i].playerTiles = playerTiles[:,i]
         game.players[i].playableNum = tilesPerPlayer + 1
         findTing(game, game.players[i])
+    end
+    if game.historyPath != ""
+        game.historyFile = joinpath(game.historyPath, string(reinterpret(Int64, time()), base = 62) * ".gh")
     end
     updateStates(game, (0,"INIT",EMPTY_TILE,0))
     return

@@ -15,9 +15,9 @@ function reportAction(g::Game, act::Tuple{Int,String,Tile,Int})
     info::String = "ACT!" * string(act[1]) * act[2] *
                     EMOJIS[act[3]] * string(act[4])
     broadcastMsg(g, info)
-    if g.historyPath != ""
+    if g.historyFile != ""
         try
-            open(g.historyPath, "a") do f
+            open(g.historyFile, "a") do f
                 println(f, info)
             end
         catch
@@ -29,7 +29,7 @@ reportAction(g::Game) = reportAction(g, g.hand_rec[end])
 function updateStates(g::Game, act::Tuple{Int,String,Tile,Int})
     if act[2] == "INIT"
         try
-           open(g.historyPath, "a") do f
+           open(g.historyFile, "a") do f
                 for i = 1:4
                     println(f, g.players[i].pname)
                 end
@@ -65,9 +65,9 @@ function updateStates(g::Game, act::Tuple{Int,String,Tile,Int})
                 end
             end
         end
-        if g.historyPath != "" && act[2] == "SCORES" || act[2] == "INIT" || act[2] == "FINI"
+        if g.historyFile != "" && act[2] == "SCORES" || act[2] == "INIT" || act[2] == "FINI"
             try
-                open(g.historyPath, "a") do f
+                open(g.historyFile, "a") do f
                     println(f, info_private)
                 end
             catch
@@ -102,7 +102,7 @@ function ask_to_play(player::Player, question::String)
         return "AUTO"
     end
 end
-# cancel the player's chance to make and action
+# cancel the player's chance to make an action
 function cancel_chance(player::Player)
     try
         if player.wantedToSend
