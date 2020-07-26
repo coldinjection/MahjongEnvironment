@@ -368,6 +368,7 @@ function play_a_round(g::Game, first_player::Int = ceil(Int, rand()*4))
         end
     end
     updateStates(g, (0,"QUES",EMPTY_TILE,0))
+    broadcastMsg(g, "START!")
 
     # start playing and keep playing until
     # there is no more tile in the stack
