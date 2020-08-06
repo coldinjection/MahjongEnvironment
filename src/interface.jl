@@ -1,5 +1,5 @@
 # time for the player to make a move
-const TIME_OUT = 3
+TIME_OUT = 600
 
 function broadcastMsg(g::Game, msg::String)
     for p in g.players
