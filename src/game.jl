@@ -155,6 +155,9 @@ function player_pengs(game::Game)
     resp_after_peng::String = "AUTO"
     resp_after_peng = ask_to_play(game.players[game.acting_player],
                                     "PLAY!ON:PENG;GIVE")
+    if resp_after_peng == "AUTO" || resp_after_peng == "GIVE1"
+        resp_after_peng = "GIVE2"
+    end
     player_gives(game, resp_after_peng[5:end])
 end
 
