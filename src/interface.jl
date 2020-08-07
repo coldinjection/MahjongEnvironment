@@ -139,8 +139,11 @@ end
 # return options a player can make after another player gives out a tile
 function other_players_options(p::Player, bt::Tile)
     options::Vector{String} = ["PASS"]
-    bt in p.pairs && push!(options, "PENG")
-    bt in p.triples && push!(options, "PENG", "GANG")
+    p.isFinished || (bt in p.pairs) && push!(options, "PENG")
+    if bt in p.triples
+        p.isFinished || push!(options, "PENG")
+        push!(options, "GANG")
+    end
     haskey(p.tingPai, bt) && push!(options, "HULE")
     return options
 end
