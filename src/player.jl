@@ -49,7 +49,7 @@ function stringify(p::Player)
         str[6] *= EMOJIS[t]
     end
     str[7] = TYPES[p.queType]
-    for i = 2:p.playableNum
+    for i = 2:length(p.playerTiles)
         str[8] *= EMOJIS[p.playerTiles[i]]
     end
     return str
