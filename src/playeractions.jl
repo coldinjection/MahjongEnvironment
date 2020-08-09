@@ -1,7 +1,7 @@
 # check if the player can hu and return the matched hupai rule with max socre
 function checkHu(g::Game, p::Player)
     findGroups(p)
-    existing_types = getTypes(p.playerTiles)
+    existing_types = getTypes(vcat(p.playerTiles, p.peng, p.gang))
     p.queType in existing_types && return ""
 
     matchedRules::Dict{Vector{TileList}, String} =

@@ -1,6 +1,6 @@
 name = "MahjongEnvironment"
 uuid = "23bfa1db-b424-47bd-8c60-6774a8744ab7"
-version = "0.1.1"
+version = "0.1.5"
 
 [deps]
 WebSockets = "104b5d7c-a370-577a-8038-80a2059c5097"

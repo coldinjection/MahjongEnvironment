@@ -383,26 +383,30 @@
             if (!file) {
                 return;
             }
+            gh = [];
             let lines = [];
             let reader = new FileReader();
             reader.onload = function (e) {
                 clearTable();
                 lines = e.target.result.split("\n");
+                // read and display player names
                 for (i = 0; i<4; i++){
                     players[i].name = lines[i];
                     players[i].nameDisplay.innerHTML = lines[i];
                     namelist[lines[i]] = players[i];
                 }
+                // read initial states
                 gh.push(lines.slice(4, 8));
                 gh[0].push("DROP!P1: ");
                 gh[0].push("DROP!P2: ");
                 gh[0].push("DROP!P3: ");
                 gh[0].push("DROP!P4: ");
+                // read the rest of the history
                 let handStart = 8;
                 let gotStates = false;
                 let newDrops = ["", "", "", ""];
                 for (i = 8; i < lines.length; i ++){
-                    if (lines[i].slice(0, 3) == "ACT"){
+                    if (lines[i].slice(0, 3) == "ACT" || i == lines.length-1){
                         if (gotStates){
                             gh.push(lines.slice(handStart, i));
                             gh[gh.length - 1].push(
@@ -422,7 +426,9 @@
                         gotStates = true;
                     }
                 }
-                progbar.max = gh.length - 1;
+                progbar.max = gh.length-1;
+                progbar.value = 0;
+                showFrame(0);
             };
             reader.readAsText(file);
         }
