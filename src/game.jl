@@ -164,7 +164,7 @@ end
 function player_gangs(game::Game, tile::String)
     gt::Tile = EMPTY_TILE
     try
-        gt = SIJOME[tile]
+        gt = string2tiles(tile)[1]
     catch
         # gt remains EMPTY_TILE
     end
