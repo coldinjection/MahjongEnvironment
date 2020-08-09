@@ -241,6 +241,9 @@ end
 
 function react_after_giving(game::Game)
     hu_players::Vector{Int} = []
+    peng_player::Int = -1
+    gang_player::Int = -1
+    gang_tile::String = ""
     @sync for i = 1:4
         i == game.giving_player && continue
         opt_i = other_players_options(game.players[i], game.bufferedTile)
@@ -256,26 +259,26 @@ function react_after_giving(game::Game)
                             build_question(opt_i, game.bufferedTile))
             opt_i[end] == "HULE" && resp_i != "HULE" && (game.guoshui[i] = true)
             if resp_i != "PASS" && resp_i[1:4] in opt_i
-                if isempty(hu_players) || resp_i == "HULE"
-                    if resp_i == "HULE"
-                        push!(hu_players, i)
-                    else
-                        for player in game.players
-                            cancel_chance(player)
-                        end
-                        if resp_i == "PENG"
-                            game.acting_player = i
-                            player_pengs(game)
-                        elseif resp_i[1:4] == "GANG"
-                            game.acting_player = i
-                            player_gangs(game, resp_i[5:end])
-                        end
-                    end
+                if resp_i == "HULE"
+                    push!(hu_players, i)
+                elseif resp_i == "PENG"
+                    peng_player = i
+                elseif resp_i[1:4] == "GANG"
+                    gang_player = i
+                    gang_tile = resp_i[5:end]
                 end
             end
         end
     end
-    if !isempty(hu_players)
+    if isempty(hu_players)
+        if peng_player != -1
+            game.acting_player = peng_player
+            player_pengs(game)
+        elseif gang_player != -1
+            game.acting_player = gang_player
+            player_gangs(game, gang_tile)
+        end
+    else
         for i in hu_players
             game.acting_player = i
             player_hus(game)
@@ -424,13 +427,14 @@ function play_a_round(g::Game, first_player::Int = ceil(Int, rand()*4))
         calcScores(g)
         updateStates(g, (0,"SCORES",EMPTY_TILE,0))
         # reset giving_player and set the next acting_player
-        g.giving_player = 0
         if g.hand_rec[end][2] == "HULE"
             hu_players::Vector{Int} = []
             for rec in g.hand_rec
                 rec[2] == "HULE" && push!(hu_players, rec[1])
             end
-            next::Int = next_player(g.acting_player)
+            # set the hu player who is the farthest
+            # from the giving player as the next acting player
+            next::Int = next_player(g.giving_player)
             for i = 1:3
                 if next in hu_players
                     g.acting_player = next
@@ -440,6 +444,7 @@ function play_a_round(g::Game, first_player::Int = ceil(Int, rand()*4))
         elseif g.hand_rec[end][2] != "GANG"
             g.acting_player = next_player(g.acting_player)
         end
+        g.giving_player = 0
         # append hand_rec to record
         g.record = vcat(g.record, g.hand_rec)
     end
