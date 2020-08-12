@@ -316,7 +316,7 @@ function calcScores(game::Game)
             # 带根 doubling by gangs
             score *= 2^length(game.players[rec[1]].gang)
             # 杠上花 或 杠上炮
-            if game.record[end][2] == "GANG"
+            if !isempty(game.record) && game.record[end][2] == "GANG"
                 score *= 2
             end
             # 抢杠
